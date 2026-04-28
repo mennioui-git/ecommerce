@@ -11,4 +11,9 @@ urlpatterns = [
     path('user/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('user/password-reset/<email>/', userauths_views.PasswordRestEmailVerify.as_view(), name='user_verify'),
     path('user/password-change/', userauths_views.PasswordChangeView.as_view(), name='password_change'),
+
+    # Store API endpoints
+    path('category/', store_views.CategoryListApiView.as_view(), name='category_list'),
+    path('products/', store_views.ProductListApiView.as_view(), name='product_list'),
+    path('products/<int:slug>/', store_views.ProductDetailApiView.as_view(), name='product_detail'),
 ]

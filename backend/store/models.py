@@ -80,6 +80,21 @@ class Product(models.Model):
             return round(product_rating, 1)
         return 0.0
 
+    def rating_count(self):
+        return Review.objects.filter(product=self, active=True).count()
+
+    def gellery(self):
+        return Gallery.objects.filter(product=self, active=True)
+
+    def specification(self):
+        return Specification.objects.filter(product=self)
+    
+    def size(self):
+        return Size.objects.filter(product=self)
+    
+    def color(self):
+        return Color.objects.filter(product=self)
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)

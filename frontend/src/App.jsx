@@ -8,6 +8,8 @@ import ForgotPassword from './views/auth/ForgotPassword'
 import CreatePassword from './views/auth/CreatePassword'
 import StoreFooter from './views/base/StoreFooter'
 import StoreHeader from './views/base/StoreHeader'
+import Products from './views/store/Products'
+import ProductDetail from './views/shop/ProductDetail';
 
 function App() {
   const [count, setCount] = useState(0)
@@ -23,6 +25,10 @@ function App() {
           <Route path="/logout" element={<Logout/>} />
           <Route path="/forgot-password" element={<ForgotPassword/>} />
           <Route path="/create-new-password" element={<CreatePassword/>} />
+
+          {/* Store components routes */}
+          <Route path="/" element={<Products/>} />
+          <Route path="/detail/:slug" element={<ProductDetail />} />
         </Routes>
       </BrowserRouter>
       <StoreFooter/>
