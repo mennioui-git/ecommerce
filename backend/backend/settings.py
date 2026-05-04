@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from environs import Env
+import os
+
+env = Env()
+env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
     
     #custome apps
     'api',
@@ -53,6 +59,17 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders',
 ]
+
+# Site URL
+SITE_URL = env("SITE_URL")
+
+# Stripe API Keys
+STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY")
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+
+# Paypal API Keys
+PAYPAL_CLIENT_ID = env('PAYPAL_CLIENT_ID')
+PAYPAL_SECRET_ID = env('PAYPAL_SECRET_ID')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -146,40 +163,172 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'userauths.User'
+
+# Site URL
+SITE_URL = env("SITE_URL")
+
+# Stripe API Keys
+STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY")
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+
+# Paypal API Keys
+PAYPAL_CLIENT_ID = env('PAYPAL_CLIENT_ID')
+PAYPAL_SECRET_ID = env('PAYPAL_SECRET_ID')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.environ.get("MAILGUN_API_KEY"),
+    "MAILGUN_SENDER_DOMAIN": os.environ.get("MAILGUN_SENDER_DOMAIN"),
+}
+
+FROM_EMAIL = " mmennioui@gmail.com"
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = " mmennioui@gmail.com"
+SERVER_EMAIL = " mmennioui@gmail.com"
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=50),
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
+
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
     'ISSUER': None,
     'JWK_URL': None,
     'LEEWAY': 0,
+
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+
     'JTI_CLAIM': 'jti',
+
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-    'TOKEN_BLACKLIST_ENABLED': True,
 }
 
+
 JAZZMIN_SETTINGS = {
-    "site_title": "Lamssa Creation",
-    "site_header": "Lamssa Creation",
-    "site_brand": "Lamssa Creation",
-    "welcome_sign": "Bienvenue sur Lamssa Creation",
-    "copyright": "Lamssa Creation",
-    "login_logo": None,
-    "show_ui_builder": True,
+    "site_title": "Desphixs",
+    "site_header": "Desphixs",
+    "site_brand": "Modern Marketplace ",
+    "site_icon": "images/favicon.ico",
+    "site_logo": "images/logos/logo.jpg",
+    "welcome_sign": "Welcome To Desphixs",
+    "copyright": "All right reserved to Desphixs",
+    "user_avatar": "images/photos/logo.jpg",
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "home",
+            "permissions": ["auth.view_user"]},
+        {"model": "auth.User"},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "order_with_respect_to": [
+        "store",
+        "store.product",
+        "store.cartorder",
+        "store.cartorderitem",
+        "store.cart",
+        "store.category",
+        "store.brand",
+        "store.productfaq",
+        "store.review",
+        "store.Coupon",
+        "store.DeliveryCouriers",
+        "userauths",
+        "userauths.user",
+        "userauths.profile",
+    ],
+    "icons": {
+        "admin.LogEntry": "fas fa-file",
+
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+
+        "userauths.User": "fas fa-user",
+        "userauths.Profile": "fas fa-address-card",
+
+        "store.Product": "fas fa-th",
+        "store.CartOrder": "fas fa-shopping-cart",
+        "store.Cart": "fas fa-cart-plus",
+        "store.CartOrderItem": "fas fa-shopping-basket",
+        "store.Brand": "fas fa-check-circle",
+        "store.productfaq": "fas fa-question",
+        "store.Review": "fas fa-star fa-beat",
+        "store.Category": "fas fa-tag",
+        "store.Coupon": "fas fa-percentage",
+        "store.DeliveryCouriers": "fas fa-truck",
+        "store.Address": "fas fa-location-arrow",
+        "store.Tag": "fas fa-tag",
+        "store.Wishlist": "fas fa-heart",
+        "store.Notification": "fas fa-bell",
+
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-arrow-circle-right",
+    "related_modal_active": False,
+
+    "custom_js": None,
+    "show_ui_builder": False,
+
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "auth.group": "vertical_tabs",
+    },
+}
+
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": True,
+    "brand_small_text": False,
+    "brand_colour": "navbar-indigo",
+    "accent": "accent-olive",
+    "navbar": "navbar-indigo navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": False,
+    "sidebar": "sidebar-dark-indigo",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "cyborg",
+    "dark_mode_theme": "cyborg",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
 }

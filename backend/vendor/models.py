@@ -1,28 +1,36 @@
 from django.db import models
 from django.utils.text import slugify
+from shortuuidfield import ShortUUIDField
+from django.utils.safestring import mark_safe
+from userauths.models import User, user_directory_path
 
 # Create your models here.
 from userauths.models import User
 
 class Vendor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.FileField(upload_to="vendor", blank=True, null=True, default="vendor.jpg")
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, related_name="vendor")
+    image = models.ImageField(upload_to=user_directory_path, default="shop-image.jpg", blank=True)
     name = models.CharField(max_length=100, help_text="Shop Name", null=True, blank=True)
+    email = models.EmailField(max_length=100, help_text="Shop Email", null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    mobile = models.CharField(max_length=100, null=True, blank=True, help_text="Shop Mobile Number")
+    mobile = models.CharField(max_length = 150, null=True, blank=True)
+    verified = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    vid = ShortUUIDField(unique=True, max_length=20)
     date = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=False)
-    slug = models.SlugField(unique=True, max_length=500)
+    slug = models.SlugField(blank=True, null=True)
 
     class Meta:
-        verbose_name = "Vendor"
         verbose_name_plural = "Vendors"
-        ordering = ['-date']
+
+    def vendor_image(self):
+        return mark_safe('  <img src="%s" width="50" height="50" style="object-fit:cover; border-radius: 6px;" />' % (self.shop_image.url))
 
     def __str__(self):
         return str(self.name)
-    
+        
+
     def save(self, *args, **kwargs):
-        if not self.slug:
+        if self.slug == "" or self.slug == None:
             self.slug = slugify(self.name)
-        super(Vendor, self).save(*args, **kwargs)
+        super(Vendor, self).save(*args, **kwargs) 
