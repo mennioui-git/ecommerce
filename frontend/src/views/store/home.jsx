@@ -10,15 +10,13 @@ const Home = () => {
 
   // Using the 'useAuthStore' hook to get the user's authentication state.
   // It returns an array with two elements: isLoggedIn and user.
-  const [isLoggedIn, user] = useAuthStore((state) => [
-    state.isLoggedIn,
-    state.user,
-  ]);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const user = useAuthStore((state) => state.user);
 
   return (
     <div>
       {/* Using a conditional statement to render different views based on whether the user is logged in or not. */}
-      {isLoggedIn() ? <LoggedInView user={user()} /> : <LoggedOutView />}
+      {isLoggedIn() ? <LoggedInView user={user} /> : <LoggedOutView />}
     </div>
   );
 };

@@ -8,7 +8,7 @@ import { API_BASE_URL, PAYPAL_CLIENT_ID, SERVER_URL } from '../../utils/constant
 import apiInstance from '../../utils/axios';
 import GetCurrentAddress from '../plugin/UserCountry';
 import UserData from '../plugin/UserData';
-import CartID from '../plugin/cartID';
+import CartID from '../plugin/CartID';
 
 
 

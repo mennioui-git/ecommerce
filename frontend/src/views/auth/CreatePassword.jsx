@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Form, useSearchParams, useNavigate } from "react-router-dom";
-import apiInstance from "../../utils/apiInstance";
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import apiInstance from '../../utils/axios';
+import Swal from 'sweetalert2'
 
 
 function CreatePassword() {
@@ -15,6 +16,9 @@ function CreatePassword() {
     const otp = searchParams.get('otp');
     const uidb64 = searchParams.get('uidb64');
     const reset_token = searchParams.get('reset_token');
+
+
+
 
     const handleNewPasswordChange = (event) => {
         setPassword(event.target.value)

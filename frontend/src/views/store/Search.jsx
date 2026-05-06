@@ -6,9 +6,9 @@ import apiInstance from '../../utils/axios';
 import Addon from '../plugin/Addon';
 import GetCurrentAddress from '../plugin/UserCountry';
 import UserData from '../plugin/UserData';
-import CartID from '../plugin/cartID';
+import CartID from '../plugin/CartID';
 import { addToCart } from '../plugin/AddToCart';
-import { addToWishlist } from '../plugin/addToWishlist';
+import { addToWishlist } from '../plugin/AddToWishlist';
 import { CartContext } from '../plugin/Context';
 
 

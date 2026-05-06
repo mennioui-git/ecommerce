@@ -18,6 +18,9 @@ urlpatterns = [
     path('user/profile/<user_id>/', userauths_views.ProfileView.as_view(), name='user_profile'),
     path('user/test/', userauths_views.testEndPoint, name='auth_register'),
 
+    # Adoon Endpoint
+    path('addon/', store_views.ConfigSettingsDetailView.as_view(), name='addon'),
+
     # Store API endpoints
     path('category/', store_views.CategoryListView.as_view(), name='category_list'),
     path('brand/', store_views.BrandListView.as_view(), name='brand'),

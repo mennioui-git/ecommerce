@@ -6,9 +6,9 @@ import apiInstance from '../../utils/axios';
 import Addon from '../plugin/Addon';
 import GetCurrentAddress from '../plugin/UserCountry';
 import UserData from '../plugin/UserData';
-import CartID from '../plugin/cartID';
+import CartID from '../plugin/CartID';
 import { addToCart } from '../plugin/AddToCart';
-import { addToWishlist } from '../plugin/addToWishlist';
+import { addToWishlist } from '../plugin/AddToWishlist';
 import { CartContext } from '../plugin/Context';
 
 function Products() {
@@ -59,21 +59,6 @@ function Products() {
 
     // Generate an array of page numbers for pagination control
     const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
-
-    // Explanation:
-    // - `indexOfLastItem` and `indexOfFirstItem` are used to determine the range of items
-    //   to be displayed on the current page.
-    // - `currentItems` holds the subset of products to be displayed on the current page.
-    // - `totalPages` calculates the total number of pages required based on the total number
-    //   of items and the specified items per page.
-    // - `pageNumbers` is an array containing the page numbers from 1 to the total number of pages.
-    //   It's often used for generating pagination controls or navigation.
-
-
-    // Define an async function for fetching data from an API endpoint and updating the state.
-    // This function takes two parameters:
-    // - endpoint: The API endpoint to fetch data from.
-    // - setDataFunction: The state update function to set the retrieved data.
     async function fetchData(endpoint, setDataFunction) {
         try {
             // Send an HTTP GET request to the provided endpoint using Axios.

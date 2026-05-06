@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import apiInstance from "../../utils/apiInstance";
+import apiInstance from "../../utils/axios";
 import { useNavigate } from "react-router-dom";
 
 function ForgotPassword() {

@@ -9,7 +9,7 @@ import { addToCart } from '../plugin/AddToCart';
 import apiInstance from '../../utils/axios';
 import GetCurrentAddress from '../plugin/UserCountry';
 import UserData from '../plugin/UserData';
-import CartID from '../plugin/cartID';
+import CartID from '../plugin/CartID';
 import { CartContext } from '../plugin/Context';
 
 function Cart() {
