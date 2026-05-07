@@ -85,9 +85,8 @@ class ProductDetailView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
 
     def get_object(self):
-        # Retrieve the product using the provided slug from the URL
         slug = self.kwargs.get('slug')
-        return Product.objects.get(slug=slug)
+        return get_object_or_404(Product, slug=slug)
     
 class CartApiView(generics.ListCreateAPIView):
     serializer_class = CartSerializer

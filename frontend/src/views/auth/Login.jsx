@@ -13,7 +13,7 @@ export default function Login() {
     const isLoggedIn = useAuthStore((state) => state.isLoggedIn())
 
     useEffect(() => {
-        if (isLoggedIn()) {
+        if (isLoggedIn) {
             navigate('/')
         }
     })
@@ -67,10 +67,10 @@ export default function Login() {
                                                         </label>
                                                         <input
                                                             type="text"
-                                                            id="username"
-                                                            name="username"
-                                                            value={username}
-                                                            onChange={(e) => setUsername(e.target.value)}
+                                                            id="email"
+                                                            name="email"
+                                                            value={email}
+                                                            onChange={(e) => setEmail(e.target.value)}
                                                             className="form-control"
 
                                                         />

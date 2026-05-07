@@ -16,7 +16,7 @@ function Register() {
     const isLoggedIn = useAuthStore((state) => state.isLoggedIn())
 
     useEffect(() => {
-        if (isLoggedIn()) {
+        if (isLoggedIn) {
             navigate('/')
         }
     })
@@ -151,40 +151,7 @@ function Register() {
                                             </form>
 
 
-                                            {/* <form>
-                                <div className="text-center mt-4 mb-2">
-                                <p>Sign up with:</p>
-                                <button
-                                    type="button"
-                                    className="btn btn-link btn-lg btn-floating"
-                                    data-ripple-color="primary"
-                                >
-                                    <i className="fab fa-facebook-f" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-link btn-lg btn-floating"
-                                    data-ripple-color="primary"
-                                >
-                                    <i className="fab fa-google" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-link btn-lg btn-floating"
-                                    data-ripple-color="primary"
-                                >
-                                    <i className="fab fa-twitter" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-link btn-lg btn-floating"
-                                    data-ripple-color="primary"
-                                >
-                                    <i className="fab fa-github" />
-                                </button>
-                                </div>
-                                
-                            </form> */}
+                               
                                         </div>
 
                                     </div>

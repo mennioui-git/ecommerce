@@ -18,7 +18,6 @@ function Products() {
     const [category, setCategory] = useState([])
     const [brand, setBrand] = useState([])
 
-
     let [isAddingToCart, setIsAddingToCart] = useState("Add To Cart");
     const [loadingStates, setLoadingStates] = useState({});
     let [loading, setLoading] = useState(true);
@@ -38,93 +37,40 @@ function Products() {
     const [qtyValue, setQtyValue] = useState(1)
     let [cartCount, setCartCount] = useContext(CartContext);
 
-    // Pagination
-    // Define the number of items to be displayed per page
     const itemsPerPage = 6;
-
-    // State hook to manage the current page being displayed
     const [currentPage, setCurrentPage] = useState(1);
-
-    // Calculate the index of the last item on the current page
     const indexOfLastItem = currentPage * itemsPerPage;
-
-    // Calculate the index of the first item on the current page
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
-    // Extract a subset of items (current page) from the products array
     const currentItems = products.slice(indexOfFirstItem, indexOfLastItem);
-
-    // Calculate the total number of pages needed based on the total number of items
     const totalPages = Math.ceil(products.length / itemsPerPage);
-
-    // Generate an array of page numbers for pagination control
     const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
+
     async function fetchData(endpoint, setDataFunction) {
         try {
-            // Send an HTTP GET request to the provided endpoint using Axios.
             const response = await axios.get(endpoint);
-
-            // If the request is successful, update the state with the retrieved data.
             setDataFunction(response.data);
-            if (products) {
-                setLoading(false)
-            }
+            if (products) { setLoading(false) }
         } catch (error) {
-            // If an error occurs during the request, log the error to the console.
             console.log(error);
         }
     }
 
-    // Use the useEffect hook to execute code when the component mounts (empty dependency array).
-    useEffect(() => {
-        // Fetch and set the 'products' data by calling fetchData with the 'products/' endpoint.
-        fetchData('products/', setProducts);
-
-    }, []);
-
-    // Use the useEffect hook to execute code when the component mounts (empty dependency array).
-    useEffect(() => {
-        // Fetch and set the 'products' data by calling fetchData with the 'products/' endpoint.
-        fetchData('featured-products/', setFeaturedProducts);
-    }, []);
-
-    // Use another useEffect hook to execute code when the component mounts (empty dependency array).
-    useEffect(() => {
-        // Fetch and set the 'category' data by calling fetchData with the 'category/' endpoint.
-        fetchData('category/', setCategory);
-    }, []);
-
-    // Fetch and set the 'brand' data by calling fetchData with the 'brand/' endpoint.
-
-    useEffect(() => {
-        // Fetch and set the 'category' data by calling fetchData with the 'category/' endpoint.
-        fetchData('brand/', setBrand);
-    }, []);
-
-
+    useEffect(() => { fetchData('products/', setProducts); }, []);
+    useEffect(() => { fetchData('featured-products/', setFeaturedProducts); }, []);
+    useEffect(() => { fetchData('category/', setCategory); }, []);
+    useEffect(() => { fetchData('brand/', setBrand); }, []);
 
     const handleColorButtonClick = (event, product_id, colorName, colorImage) => {
         setColorValue(colorName);
         setColorImage(colorImage);
         setSelectedProduct(product_id);
-
-        setSelectedColors((prevSelectedColors) => ({
-            ...prevSelectedColors,
-            [product_id]: colorName,
-        }));
-
-
+        setSelectedColors((prev) => ({ ...prev, [product_id]: colorName }));
     };
 
     const handleSizeButtonClick = (event, product_id, sizeName) => {
         setSizeValue(sizeName);
         setSelectedProduct(product_id);
-
-        setSelectedSize((prevSelectedSize) => ({
-            ...prevSelectedSize,
-            [product_id]: sizeName,
-        }));
-
+        setSelectedSize((prev) => ({ ...prev, [product_id]: sizeName }));
     };
 
     const handleQtyChange = (event, product_id) => {
@@ -132,49 +78,22 @@ function Products() {
         setSelectedProduct(product_id);
     };
 
-
     const handleAddToCart = async (product_id, price, shipping_amount) => {
-        setLoadingStates((prevStates) => ({
-            ...prevStates,
-            [product_id]: 'Adding...',
-        }));
-
-
+        setLoadingStates((prev) => ({ ...prev, [product_id]: 'Adding...' }));
         try {
             await addToCart(product_id, userData?.user_id, qtyValue, price, shipping_amount, currentAddress.country, colorValue, sizeValue, cart_id, setIsAddingToCart)
-
-            // After a successful operation, set the loading state to false
-            setLoadingStates((prevStates) => ({
-                ...prevStates,
-                [product_id]: 'Added to Cart',
-            }));
-
-
-
+            setLoadingStates((prev) => ({ ...prev, [product_id]: 'Added to Cart' }));
             setColorValue("No Color");
             setSizeValue("No Size");
-            setQtyValue(0)
-
+            setQtyValue(0);
             const url = userData?.user_id ? `cart-list/${cart_id}/${userData?.user_id}/` : `cart-list/${cart_id}/`;
             const response = await axios.get(url);
-
             setCartCount(response.data.length);
-            console.log(response.data.length);
-
-
         } catch (error) {
             console.log(error);
-
-            // In case of an error, set the loading state for the specific product back to "Add to Cart"
-            setLoadingStates((prevStates) => ({
-                ...prevStates,
-                [product_id]: 'Add to Cart',
-            }));
+            setLoadingStates((prev) => ({ ...prev, [product_id]: 'Add to Cart' }));
         }
-
-
     };
-
 
     const handleAddToWishlist = async (product_id) => {
         try {
@@ -184,332 +103,256 @@ function Products() {
         }
     };
 
+    const AddToCartButton = ({ productId, price, shipping }) => (
+        <button
+            onClick={() => handleAddToCart(productId, price, shipping)}
+            disabled={loadingStates[productId] === 'Adding...'}
+            type="button"
+            className="btn btn-primary flex-grow-1"
+            style={{ fontSize: '0.75rem' }}
+        >
+            {loadingStates[productId] === 'Added to Cart' ? (
+                <>Ajouté <FaCheckCircle /></>
+            ) : loadingStates[productId] === 'Adding...' ? (
+                <>Ajout... <FaSpinner className="fas fa-spin" /></>
+            ) : (
+                <>{loadingStates[productId] || 'Ajouter'} <FaShoppingCart /></>
+            )}
+        </button>
+    );
 
     return (
         <>
-            {loading === false &&
+            {loading === false && (
                 <div>
-                    <main className="mt-5">
+                    {/* ── Collections Section ── */}
+                    <div className="lc-products-section">
                         <div className="container">
-                            <section className="text-center container">
-                                <div className="row mt-4 mb-3">
-                                    <div className="col-lg-6 col-md-8 mx-auto">
-                                        <h1 className="fw-light">Hot Category🔥</h1>
-                                        <p className="lead text-muted">
-                                            Our Latest Categories
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-                            <div className="d-flex justify-content-center">
+                            <div className="text-center mb-2">
+                                <span className="lc-section-label">Explorer</span>
+                                <h2 className="lc-section-title">Nos Collections</h2>
+                                <p className="lc-section-subtitle">Découvrez nos dernières catégories</p>
+                            </div>
+                            <div className="lc-category-strip">
                                 {category.map((c, index) => (
-                                    <div className="align-items-center d-flex flex-column" style={{ background: "#e8e8e8", marginLeft: "10px", borderRadius: "10px", padding: "30px" }}>
-                                        <img src={c.image}
-                                            alt=""
-                                            style={{ width: "80px", height: "80px", objectFit: "cover" }}
-                                        />
-                                        <p><a href="" className='text-dark'>{c.title}</a></p>
-                                    </div>
+                                    <a href="#" className="lc-category-chip" key={index}>
+                                        <img src={c.image} alt={c.title} />
+                                        <p>{c.title}</p>
+                                    </a>
                                 ))}
-
                             </div>
 
-                            <section className="text-center container">
-                                <div className="row mt-4 mb-3">
-                                    <div className="col-lg-6 col-md-8 mx-auto">
-                                        <h1 className="fw-light">Featured Products 📍</h1>
-                                        <p className="lead text-muted">
-                                            Our Featured Products
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-                            <section className="text-center">
-                                <div className="row">
-                                    {currentItems.map((product, index) => (
-                                        <div className="col-lg-4 col-md-12 mb-4" key={index.id}>
-                                            <div className="card">
-                                                <div
-                                                    className="bg-image hover-zoom ripple"
-                                                    data-mdb-ripple-color="light"
-                                                >
-                                                    <Link to={`/detail/${product.slug}`}>
-                                                        <img
-                                                            src={(selectedProduct === product.id && colorImage) ? colorImage : product.image}
-                                                            className="w-100"
-                                                            style={{ width: "100px", height: "300px", objectFit: "cover" }}
-                                                        />
-                                                    </Link>
-                                                </div>
-                                                <div className="card-body">
+                            {/* ── Featured Products ── */}
+                            <div className="text-center mb-4 mt-2">
+                                <span className="lc-section-label">À la Une</span>
+                                <h2 className="lc-section-title">Produits Vedettes</h2>
+                                <p className="lc-section-subtitle">Une sélection soigneusement choisie pour vous</p>
+                            </div>
+                            <div className="row">
+                                {currentItems.map((product, index) => (
+                                    <div className="col-lg-4 col-md-6 mb-4" key={product.id || index}>
+                                        <div className="lc-product-card">
+                                            <div className="lc-product-card-img-wrapper">
+                                                <Link to={`/detail/${product.slug}`}>
+                                                    <img
+                                                        src={(selectedProduct === product.id && colorImage) ? colorImage : product.image}
+                                                        alt={product.title}
+                                                    />
+                                                </Link>
+                                            </div>
+                                            <div className="lc-product-card-body">
+                                                <Link to={`/vendor/${product?.vendor?.slug}`} className="lc-product-vendor">
+                                                    {product.vendor.name}
+                                                </Link>
+                                                <Link to={`/detail/${product.slug}`} className="lc-product-title">
+                                                    {product.title.slice(0, 40)}
+                                                </Link>
+                                                <Link to="/" className="lc-product-brand">{product?.brand.title}</Link>
+                                                <p className="lc-product-price">${product.price}</p>
 
-                                                    <h6 className="">By: <Link to={`/vendor/${product?.vendor?.slug}`}>{product.vendor.name}</Link></h6>
-                                                    <Link to={`/detail/${product.slug}`} className="text-reset"><h5 className="card-title mb-3 ">{product.title.slice(0, 30)}...</h5></Link>
-                                                    <Link to="/" className="text-reset"><p>{product?.brand.title}</p></Link>
-                                                    <h6 className="mb-1">${product.price}</h6>
+                                                {((product.color && product.color.length > 0) || (product.size && product.size.length > 0)) ? (
+                                                    <div className="btn-group">
+                                                        <button
+                                                            className="lc-variation-toggle dropdown-toggle"
+                                                            type="button"
+                                                            data-bs-toggle="dropdown"
+                                                            data-bs-auto-close="false"
+                                                            aria-expanded="false"
+                                                        >
+                                                            Variations
+                                                        </button>
+                                                        <ul className="dropdown-menu" style={{ minWidth: '300px' }}>
+                                                            {/* Quantity */}
+                                                            <div className="d-flex flex-column mb-2 mt-2 p-1">
+                                                                <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
+                                                                    <li>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="form-control"
+                                                                            placeholder="Quantité"
+                                                                            onChange={(e) => handleQtyChange(e, product.id)}
+                                                                            min={1}
+                                                                            defaultValue={1}
+                                                                        />
+                                                                    </li>
+                                                                </div>
+                                                            </div>
 
-                                                    {((product.color && product.color.length > 0) || (product.size && product.size.length > 0)) ? (
-                                                        <div className="btn-group">
-                                                            <button className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuClickable" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
-                                                                Variation
-                                                            </button>
-                                                            <ul className="dropdown-menu" style={{ maxWidth: "400px" }} aria-labelledby="dropdownMenuClickable">
-                                                                {/* Quantity */}
-                                                                <div className="d-flex flex-column mb-2 mt-2 p-1">
+                                                            {/* Size */}
+                                                            {product?.size && product?.size.length > 0 && (
+                                                                <div className="d-flex flex-column">
+                                                                    <li className="p-1"><b>Taille</b> : {selectedSize[product.id] || 'Choisir'}</li>
                                                                     <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
-                                                                        <>
-                                                                            <li>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    className='form-control'
-                                                                                    placeholder='Quantity'
-                                                                                    onChange={(e) => handleQtyChange(e, product.id)}
-                                                                                    min={1}
-                                                                                    defaultValue={1}
+                                                                        {product?.size?.map((size, i) => (
+                                                                            <li key={i}>
+                                                                                <button
+                                                                                    className="btn btn-secondary btn-sm me-2 mb-1"
+                                                                                    onClick={(e) => handleSizeButtonClick(e, product.id, size.name)}
+                                                                                >
+                                                                                    {size.name}
+                                                                                </button>
+                                                                            </li>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Color */}
+                                                            {product.color && product.color.length > 0 && (
+                                                                <div className="d-flex flex-column mt-3">
+                                                                    <li className="p-1"><b>Couleur</b> : {selectedColors[product.id] || 'Choisir'}</li>
+                                                                    <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
+                                                                        {product?.color?.map((color, i) => (
+                                                                            <li key={i}>
+                                                                                <input type="hidden" className={`color_name${color.id}`} />
+                                                                                <button
+                                                                                    className="color-button btn"
+                                                                                    style={{ backgroundColor: color.color_code }}
+                                                                                    onClick={(e) => handleColorButtonClick(e, product.id, color.name, color.image)}
                                                                                 />
                                                                             </li>
-                                                                        </>
+                                                                        ))}
                                                                     </div>
                                                                 </div>
-
-                                                                {/* Size */}
-                                                                {product?.size && product?.size.length > 0 && (
-                                                                    <div className="d-flex flex-column">
-                                                                        <li className="p-1"><b>Size</b>: {selectedSize[product.id] || 'Select a size'}</li>
-                                                                        <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
-                                                                            {product?.size?.map((size, index) => (
-                                                                                <>
-                                                                                    <li key={index}>
-                                                                                        <button
-                                                                                            className="btn btn-secondary btn-sm me-2 mb-1"
-                                                                                            onClick={(e) => handleSizeButtonClick(e, product.id, size.name)}
-                                                                                        >
-                                                                                            {size.name}
-                                                                                        </button>
-                                                                                    </li>
-                                                                                </>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-
-                                                                {/* Color */}
-                                                                {product.color && product.color.length > 0 && (
-                                                                    <div className="d-flex flex-column mt-3">
-                                                                        <li className="p-1 color_name_div"><b>Color</b>: {selectedColors[product.id] || 'Select a color'}</li>
-                                                                        <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
-                                                                            {product?.color?.map((color, index) => (
-                                                                                <>
-                                                                                    <input type="hidden" className={`color_name${color.id}`} name="" id="" />
-                                                                                    <li key={index}>
-                                                                                        <button
-                                                                                            key={color.id}
-                                                                                            className="color-button btn p-3 me-2"
-                                                                                            style={{ backgroundColor: color.color_code }}
-                                                                                            onClick={(e) => handleColorButtonClick(e, product.id, color.name, color.image)}
-                                                                                        >
-                                                                                        </button>
-                                                                                    </li>
-                                                                                </>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Add To Cart */}
-                                                                <div className="d-flex mt-3 p-1 w-100">
-                                                                    <button
-                                                                        onClick={() => handleAddToCart(product.id, product.price, product.shipping_amount)}
-                                                                        disabled={loadingStates[product.id] === 'Adding...'}
-                                                                        type="button"
-                                                                        className="btn btn-primary me-1 mb-1"
-                                                                    >
-                                                                        {loadingStates[product.id] === 'Added to Cart' ? (
-                                                                            <>
-                                                                                Added to Cart <FaCheckCircle />
-                                                                            </>
-                                                                        ) : loadingStates[product.id] === 'Adding...' ? (
-                                                                            <>
-                                                                                Adding to Cart <FaSpinner className='fas fa-spin' />
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                {loadingStates[product.id] || 'Add to Cart'} <FaShoppingCart />
-                                                                            </>
-                                                                        )}
-                                                                    </button>
-                                                                </div>
-                                                            </ul>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleAddToCart(product.id, product.price, product.shipping_amount)}
-                                                            disabled={loadingStates[product.id] === 'Adding...'}
-                                                            type="button"
-                                                            className="btn btn-primary me-1 mb-1"
-                                                        >
-                                                            {loadingStates[product.id] === 'Added to Cart' ? (
-                                                                <>
-                                                                    Added to Cart <FaCheckCircle />
-                                                                </>
-                                                            ) : loadingStates[product.id] === 'Adding...' ? (
-                                                                <>
-                                                                    Adding to Cart <FaSpinner className='fas fa-spin' />
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    {loadingStates[product.id] || 'Add to Cart'} <FaShoppingCart />
-                                                                </>
                                                             )}
+
+                                                            {/* Add to cart inside dropdown */}
+                                                            <div className="d-flex mt-3 p-1 w-100">
+                                                                <AddToCartButton productId={product.id} price={product.price} shipping={product.shipping_amount} />
+                                                            </div>
+                                                        </ul>
+                                                    </div>
+                                                ) : (
+                                                    <div className="lc-card-actions">
+                                                        <AddToCartButton productId={product.id} price={product.price} shipping={product.shipping_amount} />
+                                                        <button
+                                                            onClick={() => handleAddToWishlist(product.id)}
+                                                            type="button"
+                                                            className="lc-wishlist-btn"
+                                                        >
+                                                            <i className="fas fa-heart" />
                                                         </button>
-
-                                                    )}
-
-                                                    {/* Wishlist Button */}
-                                                    <button
-                                                        onClick={() => handleAddToWishlist(product.id)}
-                                                        type="button"
-                                                        className="btn btn-danger px-3 ms-2 "
-                                                    >
-                                                        <i className="fas fa-heart" />
-                                                    </button>
-
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </section>
-                            <nav className='d-flex  gap-1 pt-2'>
-                                <ul className='pagination'>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Pagination */}
+                            <nav className="d-flex gap-1 pt-3">
+                                <ul className="pagination">
                                     <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                                         <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>
-                                            <i className="ci-arrow-left me-2" />
-                                            Previous
+                                            &lsaquo; Précédent
                                         </button>
                                     </li>
                                 </ul>
                                 <ul className="pagination">
                                     {pageNumbers.map((number) => (
                                         <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
-                                            <button className="page-link" onClick={() => setCurrentPage(number)}>
-                                                {number}
-                                            </button>
+                                            <button className="page-link" onClick={() => setCurrentPage(number)}>{number}</button>
                                         </li>
                                     ))}
                                 </ul>
-
                                 <ul className="pagination">
                                     <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                                         <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>
-                                            Next
-                                            <i className="ci-arrow-right ms-3" />
-
+                                            Suivant &rsaquo;
                                         </button>
                                     </li>
                                 </ul>
-
                             </nav>
-                            <div>
-                                <div className="d-blfock mt-5" aria-label="Page navigation" >
-                                    <span className="fs-sm text-muted me-md-3">Page <b>{currentPage} </b> of <b>{totalPages}</b></span>
-                                </div>
-                                {totalPages !== 1 &&
-                                    <div className="d-block mt-2" aria-label="Page navigation" >
-                                        <span className="fs-sm text-muted me-md-3">Showing <b>{itemsPerPage}</b> of <b>{products?.length}</b> records</span>
-                                    </div>
-                                }
+                            <div className="mb-2">
+                                <span className="lc-section-subtitle">Page <b>{currentPage}</b> sur <b>{totalPages}</b></span>
                             </div>
-                            {/*Section: Wishlist*/}
+                            {totalPages !== 1 && (
+                                <div className="mb-4">
+                                    <span className="lc-section-subtitle">Affichage de <b>{itemsPerPage}</b> sur <b>{products?.length}</b> articles</span>
+                                </div>
+                            )}
                         </div>
-                    </main>
+                    </div>
 
-                    <main>
-                        <section className="text-center container">
-                            <div className="row mt-4 mb-3">
-                                <div className="col-lg-6 col-md-8 mx-auto">
-                                    <h1 className="fw-light">Category</h1>
-                                    <p className="lead text-muted">
-                                        Our Latest Categories
-                                    </p>
-                                </div>
+                    {/* ── Trending Products ── */}
+                    <div className="lc-products-section-alt">
+                        <div className="container">
+                            <div className="text-center mb-4">
+                                <span className="lc-section-label">Tendances</span>
+                                <h2 className="lc-section-title">Nos Coups de Cœur</h2>
+                                <p className="lc-section-subtitle">Les pièces les plus appréciées de la saison</p>
                             </div>
-                        </section>
-                        <div className="d-flex justify-content-center">
-                            {category.map((c, index) => (
-                                <div className="align-items-center d-flex flex-column" style={{ background: "#e8e8e8", marginLeft: "10px", borderRadius: "10px", padding: "30px" }}>
-                                    <img src={c.image}
-                                        alt=""
-                                        style={{ width: "80px", height: "80px", objectFit: "cover" }}
-                                    />
-                                    <p><a href="" className='text-dark'>{c.title}</a></p>
-                                </div>
-                            ))}
-
-                        </div>
-                        <section className="text-center container mt-5">
-                            <div className="row py-lg-5">
-                                <div className="col-lg-6 col-md-8 mx-auto">
-                                    <h1 className="fw-light">Trending Products</h1>
-                                    <p className="lead text-muted">
-                                        Something short and leading about the collection below—its contents
-                                    </p>
-                                </div>
-                            </div>
-                        </section>
-                        <div className="album py-5 bg-light">
-                            <div className="container">
-                                <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-                                    {featuredProducts.map((product, index) => (
-                                        <div className="col-lg-4 col-md-12 mb-4" key={index.id}>
-                                            <div className="card">
-                                                <div
-                                                    className="bg-image hover-zoom ripple"
-                                                    data-mdb-ripple-color="light"
-                                                >
-                                                    <img
-                                                        src={product.image}
-                                                        className="w-100"
-                                                        style={{ width: "100px", height: "300px", objectFit: "cover" }}
-                                                    />
-                                                </div>
-                                                <div className="card-body">
-                                                    <a href="" className="text-reset">
-                                                        <h5 className="card-title mb-3 ">{product.title.slice(0, 30)}...</h5>
-                                                    </a>
-                                                    <a href="" className="text-reset">
-                                                        <p>{product?.brand.title}</p>
-                                                    </a>
-                                                    <h6 className="mb-3">{addon.currency_sign}{product.price}</h6>
-                                                    <button type="button" className="btn btn-primary me-1 mb-1">
-                                                        Add to cart
+                            <div className="row">
+                                {featuredProducts.map((product, index) => (
+                                    <div className="col-lg-4 col-md-6 mb-4" key={product.id || index}>
+                                        <div className="lc-product-card">
+                                            <div className="lc-product-card-img-wrapper">
+                                                <Link to={`/detail/${product.slug}`}>
+                                                    <img src={product.image} alt={product.title} />
+                                                </Link>
+                                            </div>
+                                            <div className="lc-product-card-body">
+                                                <span className="lc-product-vendor">{product.vendor?.name}</span>
+                                                <Link to={`/detail/${product.slug}`} className="lc-product-title">
+                                                    {product.title.slice(0, 40)}
+                                                </Link>
+                                                <span className="lc-product-brand">{product?.brand.title}</span>
+                                                <p className="lc-product-price">{addon.currency_sign}{product.price}</p>
+                                                <div className="lc-card-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary flex-grow-1"
+                                                        style={{ fontSize: '0.75rem' }}
+                                                    >
+                                                        Ajouter <FaShoppingCart />
                                                     </button>
-                                                    <button type="button" className="btn btn-danger px-3 me-1 mb-1">
+                                                    <button type="button" className="lc-wishlist-btn">
                                                         <i className="fas fa-heart" />
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </main>
+                    </div>
                 </div>
-            }
+            )}
 
-            {loading === true &&
-                <div className="container text-center">
-                    <img className='' src="https://cdn.dribbble.com/users/2046015/screenshots/5973727/06-loader_telega.gif" alt="" />
+            {loading === true && (
+                <div className="lc-loading">
+                    <span className="lc-section-label" style={{ textAlign: 'center' }}>Chargement</span>
+                    <div className="d-flex gap-2">
+                        <span className="lc-loading-dot" style={{ animationDelay: '0s' }} />
+                        <span className="lc-loading-dot" style={{ animationDelay: '0.2s' }} />
+                        <span className="lc-loading-dot" style={{ animationDelay: '0.4s' }} />
+                    </div>
                 </div>
-            }
+            )}
         </>
-
-
-
-
-    )
+    );
 }
 
-export default Products
+export default Products;
