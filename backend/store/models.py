@@ -1,15 +1,9 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from shortuuid.django_fields import ShortUUIDField
 from django.utils.html import mark_safe
 from django.utils import timezone
-from django.dispatch import receiver
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 
 from userauths.models import User, user_directory_path, Profile
@@ -240,15 +234,16 @@ class Product(models.Model):
         new_price = ((self.old_price - self.price) / self.old_price) * 100
         return round(new_price, 0)
     
-    # Calculates the average rating of the product
     def product_rating(self):
-        product_rating = Review.objects.filter(product=self).aggregate(avg_rating=models.Avg('rating'))
-        return product_rating['avg_rating']
-    
-    # Returns the count of ratings for the product
+        from store.mongo_reviews import recalculate_product_rating
+        return recalculate_product_rating(self.pk)
+
     def rating_count(self):
-        rating_count = Review.objects.filter(product=self).count()
-        return rating_count
+        try:
+            from store.mongo_client import get_reviews_collection
+            return get_reviews_collection().count_documents({"product_id": self.pk, "active": True})
+        except Exception:
+            return 0
     
     # Returns the count of orders for the product with "paid" payment status
     def order_count(self):
@@ -470,43 +465,6 @@ class CartOrderItem(models.Model):
     # Method to return a string representation of the object
     def __str__(self):
         return self.oid
-
-# Define a model for Reviews
-class Review(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=True, null=True, related_name="reviews")
-    review = models.TextField()
-    reply = models.CharField(null=True, blank=True, max_length=1000)
-    rating = models.IntegerField(choices=RATING, default=None)
-    reviewer_name = models.CharField(max_length=200, null=True, blank=True)
-    active = models.BooleanField(default=False)
-    helpful = models.ManyToManyField(User, blank=True, related_name="helpful")
-    not_helpful = models.ManyToManyField(User, blank=True, related_name="not_helpful")
-    date = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        verbose_name_plural = "Reviews & Rating"
-        ordering = ["-date"]
-        
-    # Method to return a string representation of the object
-    def __str__(self):
-        if self.product:
-            return self.product.title
-        else:
-            return "Review"
-        
-    # Method to get the rating value
-    def get_rating(self):
-        return self.rating
-    
-    def profile(self):
-        return Profile.objects.get(user=self.user)
-    
-# Signal handler to update the product rating when a review is saved
-@receiver(post_save, sender=Review)
-def update_product_rating(sender, instance, **kwargs):
-    if instance.product:
-        instance.product.save()
 
 # Define a model for Wishlist
 class Wishlist(models.Model):

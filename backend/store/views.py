@@ -28,7 +28,7 @@ from store.serializers import CancelledOrderSerializer, CartSerializer, CartOrde
 
 # Models
 from userauths.models import User
-from store.models import CancelledOrder,ConfigSettings, CartOrderItem, CouponUsers, Cart, Notification, Product, Tag ,Category, DeliveryCouriers, CartOrder, Gallery, Brand, ProductFaq, Review,  Specification, Coupon, Color, Size, Address, Wishlist, Tax
+from store.models import CancelledOrder, ConfigSettings, CartOrderItem, CouponUsers, Cart, Notification, Product, Tag, Category, DeliveryCouriers, CartOrder, Gallery, Brand, ProductFaq, Specification, Coupon, Color, Size, Address, Wishlist, Tax
 
 from vendor.models import Vendor
 
@@ -668,57 +668,95 @@ class PaymentSuccessView(generics.CreateAPIView):
             session = None
 
 
-class ReviewRatingAPIView(generics.CreateAPIView):
-    serializer_class = ReviewSerializer
-    queryset = Review.objects.all()
-    permission_classes = (AllowAny, )
+class ReviewRatingAPIView(APIView):
+    permission_classes = (AllowAny,)
 
-    def create(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        from store.mongo_reviews import create_review, recalculate_product_rating
+        from store.serializers import serialize_mongo_review
         payload = request.data
 
-        user_id = payload.get('user_id')
-        product_id = payload['product_id']
-        rating = payload['rating']
-        review = payload['review']
+        user_id = payload.get("user_id")
+        product_id = payload.get("product_id")
+        rating = payload.get("rating")
+        review_text = payload.get("review")
 
-        product = Product.objects.get(id=product_id)
+        if not product_id or not rating or not review_text:
+            return Response({"error": "product_id, rating and review are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = None
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        clean_user_id = None
         reviewer_name = None
-
-        if user_id and str(user_id) not in ('0', '', 'undefined', 'null'):
+        if user_id and str(user_id) not in ("0", "", "undefined", "null"):
             try:
-                user = User.objects.get(id=user_id)
-            except User.DoesNotExist:
-                pass
+                clean_user_id = int(user_id)
+                User.objects.get(id=clean_user_id)
+            except (User.DoesNotExist, ValueError):
+                clean_user_id = None
 
-        if user is None:
-            first_name = payload.get('first_name', '').strip()
-            last_name = payload.get('last_name', '').strip()
-            reviewer_name = f"{first_name} {last_name}".strip() or 'Anonymous'
+        if clean_user_id is None:
+            first_name = payload.get("first_name", "").strip()
+            last_name = payload.get("last_name", "").strip()
+            reviewer_name = f"{first_name} {last_name}".strip() or "Anonymous"
 
-        Review.objects.create(
-            user=user,
-            product=product,
-            rating=rating,
-            review=review,
-            reviewer_name=reviewer_name,
-        )
+        create_review({
+            "product_id": product.id,
+            "user_id": clean_user_id,
+            "reviewer_name": reviewer_name,
+            "rating": rating,
+            "review": review_text,
+        })
+
+        new_rating = recalculate_product_rating(product.id)
+        Product.objects.filter(id=product.id).update(rating=new_rating)
 
         return Response({"message": "Review Created Successfully."}, status=status.HTTP_201_CREATED)
 
 
+class ReviewListView(APIView):
+    permission_classes = (AllowAny,)
 
-class ReviewListView(generics.ListAPIView):
-    serializer_class = ReviewSerializer
-    permission_classes = (AllowAny, )
+    def get(self, request, product_id, *args, **kwargs):
+        from store.mongo_reviews import get_reviews_by_product
+        from store.serializers import serialize_mongo_review
+        try:
+            page = int(request.query_params.get("page", 1))
+            page_size = int(request.query_params.get("page_size", 10))
+            rating_filter = request.query_params.get("rating")
+            rating_filter = int(rating_filter) if rating_filter else None
+        except (ValueError, TypeError):
+            page, page_size, rating_filter = 1, 10, None
 
-    def get_queryset(self):
-        product_id = self.kwargs['product_id']
+        docs, total, pages = get_reviews_by_product(
+            product_id=int(product_id),
+            page=page,
+            page_size=page_size,
+            rating_filter=rating_filter,
+        )
+        results = [serialize_mongo_review(d, request) for d in docs]
+        return Response({"results": results, "total": total, "page": page, "pages": pages})
 
-        product = Product.objects.get(id=product_id)
-        reviews = Review.objects.filter(product=product)
-        return reviews
+
+class ReviewHelpfulAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, review_id, *args, **kwargs):
+        from store.mongo_reviews import toggle_helpful_vote
+        user_id = request.data.get("user_id")
+        helpful = request.data.get("helpful", True)
+        if not user_id:
+            return Response({"error": "user_id required."}, status=status.HTTP_400_BAD_REQUEST)
+        doc = toggle_helpful_vote(review_id, user_id, bool(helpful))
+        if doc is None:
+            return Response({"error": "Review not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            "helpful_count": len(doc.get("helpful_users", [])),
+            "not_helpful_count": len(doc.get("not_helpful_users", [])),
+        })
     
 class SearchProductsAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer

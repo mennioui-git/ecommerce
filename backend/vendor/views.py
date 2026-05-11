@@ -18,33 +18,32 @@ from rest_framework.parsers import MultiPartParser, FormParser
 # Serializers
 from userauths.serializer import ProfileSerializer
 from store.serializers import (
-    CouponSummarySerializer, 
-    EarningSummarySerializer, 
-    NotificationSerializer, 
-    NotificationSummarySerializer, 
-    SummarySerializer, 
-    CartOrderItemSerializer, 
-    ProductSerializer, 
-    DeliveryCouriersSerializer, 
-    CartOrderSerializer, 
-    GallerySerializer, 
-    ReviewSerializer,  
-    SpecificationSerializer, 
-    CouponSerializer, 
-    ColorSerializer, 
-    SizeSerializer, 
+    CouponSummarySerializer,
+    EarningSummarySerializer,
+    NotificationSerializer,
+    NotificationSummarySerializer,
+    SummarySerializer,
+    CartOrderItemSerializer,
+    ProductSerializer,
+    DeliveryCouriersSerializer,
+    CartOrderSerializer,
+    GallerySerializer,
+    SpecificationSerializer,
+    CouponSerializer,
+    ColorSerializer,
+    SizeSerializer,
     VendorSerializer
 )
+from rest_framework.views import APIView
 
 # Models
 from userauths.models import Profile
 from store.models import (
-    Notification, 
+    Notification,
     CartOrderItem,
     Product,
-    DeliveryCouriers, 
+    DeliveryCouriers,
     CartOrder,
-    Review,
     Coupon,
 )
 from vendor.models import Vendor
@@ -417,27 +416,37 @@ def MonthlyEarningTracker(request, vendor_id):
     )
     return Response(monthly_earning_tracker)
 
-class ReviewsListAPIView(generics.ListAPIView):
-    serializer_class = ReviewSerializer
+class ReviewsListAPIView(APIView):
     permission_classes = (AllowAny,)
 
-    def get_queryset(self):
-        vendor_id = self.kwargs['vendor_id']
+    def get(self, request, vendor_id, *args, **kwargs):
+        from store.mongo_reviews import get_reviews_by_vendor
+        from store.serializers import serialize_mongo_review
         vendor = Vendor.objects.get(id=vendor_id)
-        reviews = Review.objects.filter(product__vendor=vendor)
-        return reviews
+        product_ids = list(Product.objects.filter(vendor=vendor).values_list("id", flat=True))
+        docs = get_reviews_by_vendor(product_ids)
+        return Response([serialize_mongo_review(d, request) for d in docs])
 
-class ReviewsDetailAPIView(generics.RetrieveUpdateAPIView):
-    serializer_class = ReviewSerializer
+
+class ReviewsDetailAPIView(APIView):
     permission_classes = (AllowAny,)
 
-    def get_object(self):
-        vendor_id = self.kwargs['vendor_id']
-        review_id = self.kwargs['review_id']
+    def get(self, request, vendor_id, review_id, *args, **kwargs):
+        from store.mongo_reviews import get_review_by_id
+        from store.serializers import serialize_mongo_review
+        doc = get_review_by_id(review_id)
+        if doc is None:
+            return Response({"error": "Review not found."}, status=404)
+        return Response(serialize_mongo_review(doc, request))
 
-        vendor = Vendor.objects.get(id=vendor_id)
-        review = Review.objects.get(product__vendor=vendor, id=review_id)
-        return review
+    def patch(self, request, vendor_id, review_id, *args, **kwargs):
+        from store.mongo_reviews import update_review_reply
+        from store.serializers import serialize_mongo_review
+        reply = request.data.get("reply", "")
+        doc = update_review_reply(review_id, reply)
+        if doc is None:
+            return Response({"error": "Review not found."}, status=404)
+        return Response(serialize_mongo_review(doc, request))
 
 class CouponListAPIView(generics.ListAPIView):
     serializer_class = CouponSerializer

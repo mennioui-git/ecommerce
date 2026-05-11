@@ -75,9 +75,9 @@ function Reviews() {
                       <div className="row">
                         <div className="col-lg-4 d-flex justify-content-center align-items-center mb-4 mb-lg-0">
                           <img
-                            src={review.profile.image}
+                            src={review.profile?.image || "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"}
                             className="rounded-circle img-fluid shadow-1"
-                            alt="woman avatar"
+                            alt="reviewer avatar"
                             style={{ width: 200, height: 200, objectFit: "cover" }}
                           />
                         </div>

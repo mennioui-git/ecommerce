@@ -1,17 +1,16 @@
 from django.contrib import admin
 from store.models import (
-    Category, 
-    Product, 
-    Gallery, 
-    Specification, 
-    Size, 
-    Color, 
-    Cart, 
-    CartOrder, 
-    CartOrderItem, 
-    Notification, 
+    Category,
+    Product,
+    Gallery,
+    Specification,
+    Size,
+    Color,
+    Cart,
+    CartOrder,
+    CartOrderItem,
+    Notification,
     Coupon,
-    Review,
     Tax,
     Wishlist
 )
@@ -45,6 +44,5 @@ admin.site.register(CartOrder)
 admin.site.register(CartOrderItem)
 admin.site.register(Notification)
 admin.site.register(Coupon)
-admin.site.register(Review)
 admin.site.register(Wishlist)
 admin.site.register(Tax)

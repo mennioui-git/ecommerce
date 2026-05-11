@@ -42,6 +42,10 @@ function ProductDetail() {
 
     const [createReview, setCreateReview] = useState({ user_id: 0, product_id: product?.id, review: "", rating: 0, first_name: "", last_name: "" })
     const [reviews, setReviews] = useState([]);
+    const [reviewPage, setReviewPage] = useState(1);
+    const [reviewPages, setReviewPages] = useState(1);
+    const [reviewTotal, setReviewTotal] = useState(0);
+    const [ratingFilter, setRatingFilter] = useState(null);
 
     const axios = apiInstance
     const params = useParams()
@@ -130,15 +134,31 @@ function ProductDetail() {
         })
     }
 
-    const fetchReviewData = async () => {
+    const fetchReviewData = async (page = 1, rating = null) => {
         if (!product?.id) return;
-        axios.get(`reviews/${product.id}/`).then((res) => {
-            setReviews(res.data);
-        })
+        const params = new URLSearchParams({ page, page_size: 5 });
+        if (rating) params.append('rating', rating);
+        axios.get(`reviews/${product.id}/?${params}`).then((res) => {
+            setReviews(res.data.results || []);
+            setReviewPage(res.data.page || 1);
+            setReviewPages(res.data.pages || 1);
+            setReviewTotal(res.data.total || 0);
+        });
     }
     useEffect(() => {
-        fetchReviewData()
-    }, [product?.id])
+        fetchReviewData(1, ratingFilter)
+    }, [product?.id, ratingFilter])
+
+    const handleHelpfulVote = (reviewId, helpful) => {
+        if (!userData?.user_id) return;
+        axios.post(`reviews/${reviewId}/helpful/`, { user_id: userData.user_id, helpful }).then((res) => {
+            setReviews(prev => prev.map(r =>
+                r.id === reviewId
+                    ? { ...r, helpful_count: res.data.helpful_count, not_helpful_count: res.data.not_helpful_count }
+                    : r
+            ));
+        });
+    };
 
     const handleReviewSubmit = (e) => {
         e.preventDefault()
@@ -595,9 +615,23 @@ function ProductDetail() {
                                         </div>
                                         {/* Column 2: Display existing reviews */}
                                         <div className="col-md-6">
-                                            {reviews.length > 0 ?
+                                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                                <h2 className="mb-0">Reviews {reviewTotal > 0 && <small className="text-muted fs-6">({reviewTotal})</small>}</h2>
+                                                <div className="btn-group btn-group-sm">
+                                                    {[null, 1, 2, 3, 4, 5].map((r) => (
+                                                        <button
+                                                            key={r ?? 'all'}
+                                                            type="button"
+                                                            className={`btn ${ratingFilter === r ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                                            onClick={() => { setRatingFilter(r); setReviewPage(1); }}
+                                                        >
+                                                            {r === null ? 'All' : '★'.repeat(r)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {reviews.length > 0 ? (
                                                 <>
-                                                    <h2>All Reviews</h2>
                                                     {reviews.map((review, index) => (
                                                         <div key={review.id ?? index} className="card mb-3 rounded-3">
                                                             <div className="row g-0">
@@ -605,29 +639,69 @@ function ProductDetail() {
                                                                     <img
                                                                         src={review.profile?.image || "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"}
                                                                         alt="User Image"
-                                                                        className="img-fluid"
+                                                                        className="img-fluid rounded-start"
+                                                                        style={{ objectFit: 'cover', height: '100%', maxHeight: 100 }}
                                                                     />
                                                                 </div>
                                                                 <div className="col-md-9">
-                                                                    <div className="card-body">
-                                                                        <h5 className="card-title">{review.profile?.full_name}</h5>
-                                                                        <p className="card-text">{moment(review.date).format("MM/DD/YYYY")}</p>
-                                                                        <p className="card-text">
-                                                                            {review.review}
-                                                                        </p>
+                                                                    <div className="card-body py-2">
+                                                                        <div className="d-flex justify-content-between">
+                                                                            <h5 className="card-title mb-0">{review.profile?.full_name}</h5>
+                                                                            <span className="text-warning">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                                                                        </div>
+                                                                        <p className="card-text text-muted small">{moment(review.date).format("MM/DD/YYYY")}</p>
+                                                                        <p className="card-text">{review.review}</p>
+                                                                        {review.reply && (
+                                                                            <p className="text-muted small border-start border-2 ps-2 mb-1">
+                                                                                <strong>Vendor:</strong> {review.reply}
+                                                                            </p>
+                                                                        )}
+                                                                        <div className="d-flex gap-2 mt-1">
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-sm btn-outline-success"
+                                                                                onClick={() => handleHelpfulVote(review.id, true)}
+                                                                                title="Helpful"
+                                                                            >
+                                                                                👍 {review.helpful_count || 0}
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-sm btn-outline-danger"
+                                                                                onClick={() => handleHelpfulVote(review.id, false)}
+                                                                                title="Not helpful"
+                                                                            >
+                                                                                👎 {review.not_helpful_count || 0}
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     ))}
+                                                    {reviewPages > 1 && (
+                                                        <div className="d-flex justify-content-center gap-2 mt-3">
+                                                            <button
+                                                                className="btn btn-outline-primary btn-sm"
+                                                                disabled={reviewPage <= 1}
+                                                                onClick={() => { const p = reviewPage - 1; setReviewPage(p); fetchReviewData(p, ratingFilter); }}
+                                                            >
+                                                                ← Précédent
+                                                            </button>
+                                                            <span className="align-self-center small">Page {reviewPage} / {reviewPages}</span>
+                                                            <button
+                                                                className="btn btn-outline-primary btn-sm"
+                                                                disabled={reviewPage >= reviewPages}
+                                                                onClick={() => { const p = reviewPage + 1; setReviewPage(p); fetchReviewData(p, ratingFilter); }}
+                                                            >
+                                                                Suivant →
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </>
-
-                                                :
-
-                                                <h2>No Reviews Yet</h2>
-                                            }
-
-                                            {/* More reviews can be added here */}
+                                            ) : (
+                                                <p className="text-muted">No reviews yet. Be the first to review!</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

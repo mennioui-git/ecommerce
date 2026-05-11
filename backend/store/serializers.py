@@ -1,30 +1,28 @@
 from rest_framework import serializers
 
 from store.models import (
-    CancelledOrder, 
-    Cart, 
-    CartOrderItem, 
-    Notification, 
-    CouponUsers, 
-    Product, 
-    Tag ,
-    Category, 
-    DeliveryCouriers, 
-    CartOrder, 
-    Gallery, 
-    Brand, 
-    ProductFaq, 
-    Review,  
-    Specification, 
-    Coupon, 
-    Color, 
-    Size, 
-    Address, 
-    Wishlist, 
+    CancelledOrder,
+    Cart,
+    CartOrderItem,
+    Notification,
+    CouponUsers,
+    Product,
+    Tag,
+    Category,
+    DeliveryCouriers,
+    CartOrder,
+    Gallery,
+    Brand,
+    ProductFaq,
+    Specification,
+    Coupon,
+    Color,
+    Size,
+    Address,
+    Wishlist,
     Vendor,
     ConfigSettings
 )
-from store.models import Gallery
 from userauths.serializer import ProfileSerializer, UserSerializer
 
 class ConfigSettingsSerializer(serializers.ModelSerializer):
@@ -243,38 +241,54 @@ class VendorSerializer(serializers.ModelSerializer):
             # For other methods, set serialization depth to 3.
             self.Meta.depth = 3
 
-# Define a serializer for the Review model
-class ReviewSerializer(serializers.ModelSerializer):
-    product = ProductSerializer()
-    profile = serializers.SerializerMethodField()
+def serialize_mongo_review(doc: dict, request=None) -> dict:
+    """Convert a MongoDB review document to a JSON-safe dict with profile and product info."""
+    from userauths.models import Profile
+    from store.models import Product
 
-    def get_profile(self, obj):
-        if obj.user:
-            try:
-                from userauths.models import Profile
-                p = Profile.objects.get(user=obj.user)
-                return {
-                    'full_name': p.full_name or obj.user.full_name,
-                    'image': p.image.url if p.image else '',
-                }
-            except Exception:
-                return {'full_name': obj.user.full_name, 'image': ''}
-        return {
-            'full_name': obj.reviewer_name or 'Anonymous',
-            'image': '',
-        }
+    user_id = doc.get("user_id")
+    profile = {"full_name": doc.get("reviewer_name") or "Anonymous", "image": ""}
+    if user_id:
+        try:
+            p = Profile.objects.select_related("user").get(user_id=user_id)
+            full_name = p.full_name or p.user.full_name or ""
+            image_url = ""
+            if p.image:
+                image_url = request.build_absolute_uri(p.image.url) if request else p.image.url
+            profile = {"full_name": full_name, "image": image_url}
+        except Profile.DoesNotExist:
+            pass
 
-    class Meta:
-        model = Review
-        fields = '__all__'
+    product_info = {"id": doc.get("product_id"), "title": ""}
+    product_id = doc.get("product_id")
+    if product_id:
+        try:
+            prod = Product.objects.only("id", "title").get(id=product_id)
+            product_info["title"] = prod.title
+        except Product.DoesNotExist:
+            pass
 
-    def __init__(self, *args, **kwargs):
-        super(ReviewSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST':
-            self.Meta.depth = 0
-        else:
-            self.Meta.depth = 3
+    return {
+        "id": doc.get("id"),
+        "product_id": product_id,
+        "product": product_info,
+        "user_id": user_id,
+        "reviewer_name": doc.get("reviewer_name"),
+        "rating": doc.get("rating"),
+        "review": doc.get("review"),
+        "reply": doc.get("reply"),
+        "active": doc.get("active", True),
+        "helpful_count": len(doc.get("helpful_users", [])),
+        "not_helpful_count": len(doc.get("not_helpful_users", [])),
+        "helpful_users": doc.get("helpful_users", []),
+        "date": doc.get("date"),
+        "profile": profile,
+    }
+
+
+class ReviewSerializer(serializers.Serializer):
+    """Dummy serializer kept for import compatibility — use serialize_mongo_review() instead."""
+    pass
 
 # Define a serializer for the Wishlist model
 class WishlistSerializer(serializers.ModelSerializer):
