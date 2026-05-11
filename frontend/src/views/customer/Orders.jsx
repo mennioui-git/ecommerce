@@ -75,7 +75,7 @@ function Orders() {
                                                         <div className="">
                                                             <p className="mb-1">Pending Delivery</p>
                                                             <h2 className="mb-0">
-                                                                6
+                                                                {orders.filter(o => o.order_status === "Pending").length}
                                                                 <span
                                                                     className=""
                                                                     style={{ fontSize: "0.875rem" }}
@@ -104,7 +104,7 @@ function Orders() {
                                                         <div className="">
                                                             <p className="mb-1">Fulfilled Orders</p>
                                                             <h2 className="mb-0">
-                                                                2
+                                                                {orders.filter(o => o.order_status === "Fulfilled").length}
                                                                 <span
                                                                     className=""
                                                                     style={{ fontSize: "0.875rem" }}

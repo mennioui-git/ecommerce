@@ -1,24 +1,38 @@
-import React, { useState, useEffect } from 'react'
-import Sidebar from './Sidebar'
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+import Sidebar from './Sidebar';
 import apiInstance from '../../utils/axios';
 import UserData from '../plugin/UserData';
-import moment from 'moment';
-import { Link } from 'react-router-dom';
 import { addToWishlist } from '../plugin/AddToWishlist';
+import { getGuestId } from '../../utils/guestId';
 
 function Wishlist() {
-    const [wishlist, setWishlist] = useState([])
-
-    const axios = apiInstance
-    const userData = UserData()
-
+    const [wishlist, setWishlist] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const userData = UserData();
 
     const fetchWishlist = async () => {
+        setLoading(true);
         try {
-            const response = await axios.get(`customer/wishlist/${userData?.user_id}/`);
-            setWishlist(response.data);
-        } catch (error) {
-            console.log(error);
+            if (userData?.user_id) {
+                // ── Authenticated: load from DB ───────────────────────────
+                const res = await apiInstance.get(`customer/wishlist/${userData.user_id}/`);
+                setWishlist(res.data);
+            } else {
+                // ── Guest: load from Redis ────────────────────────────────
+                const guestId = getGuestId();
+                const res = await apiInstance.get('guest/wishlist/', {
+                    params: { guest_id: guestId },
+                    headers: { 'X-Guest-ID': guestId },
+                });
+                // Guest endpoint returns plain Product objects
+                setWishlist(res.data.map(product => ({ product })));
+            }
+        } catch (err) {
+            console.error('Error fetching wishlist:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -26,107 +40,102 @@ function Wishlist() {
         fetchWishlist();
     }, [userData?.user_id]);
 
-    console.log(wishlist);
-
-    const handleAddToWishlist = async (product_id) => {
-        try {
-            await addToWishlist(product_id, userData?.user_id)
-            fetchWishlist()
-
-        } catch (error) {
-            console.log(error);
-        }
+    const handleToggle = async (productId) => {
+        await addToWishlist(productId, userData?.user_id);
+        fetchWishlist();
     };
+
+    if (loading) {
+        return (
+            <div className="container mt-5 text-center">
+                <i className="fas fa-spinner fa-spin fa-2x" />
+            </div>
+        );
+    }
 
     return (
         <div>
             <main className="mt-5">
                 <div className="container">
-                    <section className="">
+                    <section>
                         <div className="row">
-                            <Sidebar />
-                            <div className="col-lg-9 mt-1">
-                                <section className="">
-                                    <main className="mb-5" style={{}}>
-                                        <div className="container">
-                                            {/* Section: Summary */}
-                                            <section className="">
-                                                <div className="row">
-                                                    <h3 className="mb-3">
-                                                        {" "}
-                                                        <i className="fas fa-heart text-danger" /> Wishlist{" "}
-                                                    </h3>
-                                                    {wishlist.map((w, index) => (
-                                                        <div className="col-lg-4 col-md-12 mb-4">
-                                                            <div className="card">
-                                                                <div
-                                                                    className="bg-image hover-zoom ripple"
-                                                                    data-mdb-ripple-color="light"
-                                                                >
-                                                                    <img
-                                                                        src={w.product.image}
-                                                                        className="w-100"
-                                                                        style={{ width: "100px", height: "300px", objectFit: "cover" }}
-                                                                    />
-                                                                    <a href="#!">
-                                                                        <div className="mask">
-                                                                            <div className="d-flex justify-content-start align-items-end h-100">
-                                                                                <h5>
-                                                                                    <span className="badge badge-primary ms-2">
-                                                                                        New
-                                                                                    </span>
-                                                                                </h5>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="hover-overlay">
-                                                                            <div
-                                                                                className="mask"
-                                                                                style={{
-                                                                                    backgroundColor: "rgba(251, 251, 251, 0.15)"
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div className="card-body">
-                                                                    <a href="" className="text-reset">
-                                                                        <h6 className="card-title mb-3 ">{w.product.title.slice(0, 30)}...</h6>
-                                                                    </a>
-                                                                    <a href="" className="text-reset">
-                                                                        <p>{w.product?.brand.title}</p>
-                                                                    </a>
-                                                                    <h6 className="mb-3">{w.product.price}</h6>
+                            {userData?.user_id && <Sidebar />}
+                            <div className={userData?.user_id ? 'col-lg-9 mt-1' : 'col-12'}>
+                                <h3 className="mb-3">
+                                    <i className="fas fa-heart text-danger me-2" />
+                                    Wishlist
+                                    <span className="badge bg-danger ms-2">{wishlist.length}</span>
+                                </h3>
 
-                                                                    <button onClick={() => handleAddToWishlist(w.product.id)} type="button" className="btn btn-danger px-3 me-1 mb-1">
-                                                                        <i className="fas fa-heart" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
+                                {!userData?.user_id && (
+                                    <div className="alert alert-info mb-4">
+                                        <i className="fas fa-info-circle me-2" />
+                                        Wishlist saved for 30 days.{' '}
+                                        <Link to="/login">Log in</Link> to keep it permanently across all devices.
+                                    </div>
+                                )}
+
+                                {wishlist.length === 0 ? (
+                                    <div className="text-center py-5">
+                                        <i className="fas fa-heart-broken fa-3x text-muted mb-3" />
+                                        <h5 className="text-muted">Your wishlist is empty</h5>
+                                        <Link to="/" className="btn btn-primary mt-3">
+                                            Browse Products
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="row">
+                                        {wishlist.map((w) => (
+                                            <div key={w.product.id} className="col-lg-4 col-md-6 mb-4">
+                                                <div className="card h-100 shadow-sm">
+                                                    <div style={{ height: 220, overflow: 'hidden' }}>
+                                                        <img
+                                                            src={w.product.image}
+                                                            className="w-100 h-100"
+                                                            style={{ objectFit: 'cover' }}
+                                                            alt={w.product.title}
+                                                        />
+                                                    </div>
+                                                    <div className="card-body d-flex flex-column">
+                                                        <Link
+                                                            to={`/detail/${w.product.slug}/`}
+                                                            className="text-reset text-decoration-none"
+                                                        >
+                                                            <h6 className="card-title mb-2">
+                                                                {w.product.title?.length > 50
+                                                                    ? w.product.title.slice(0, 50) + '…'
+                                                                    : w.product.title}
+                                                            </h6>
+                                                        </Link>
+                                                        <h6 className="mb-3 text-primary">${w.product.price}</h6>
+                                                        <div className="mt-auto d-flex gap-2">
+                                                            <Link
+                                                                to={`/detail/${w.product.slug}/`}
+                                                                className="btn btn-outline-primary btn-sm flex-grow-1"
+                                                            >
+                                                                View Product
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => handleToggle(w.product.id)}
+                                                                className="btn btn-danger btn-sm"
+                                                                title="Remove from wishlist"
+                                                            >
+                                                                <i className="fas fa-heart-broken" />
+                                                            </button>
                                                         </div>
-                                                    ))}
-
-                                                    {wishlist.length < 1 &&
-                                                        <h6 className='container'>Your wishlist is Empty </h6>
-                                                    }
-
+                                                    </div>
                                                 </div>
-                                            </section>
-                                            {/* Section: Summary */}
-                                            {/* Section: MSC */}
-                                            {/* Section: MSC */}
-                                        </div>
-                                        {/* Container for demo purpose */}
-                                    </main>
-                                </section>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </section>
-                    {/*Section: Wishlist*/}
                 </div>
             </main>
-
         </div>
-    )
+    );
 }
 
-export default Wishlist
+export default Wishlist;

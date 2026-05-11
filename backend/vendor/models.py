@@ -20,6 +20,13 @@ class Vendor(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(blank=True, null=True)
 
+    # Banking / payout information
+    bank_name = models.CharField(max_length=150, null=True, blank=True)
+    account_holder_name = models.CharField(max_length=150, null=True, blank=True)
+    account_number = models.CharField(max_length=50, null=True, blank=True)
+    iban = models.CharField(max_length=34, null=True, blank=True)
+    swift_code = models.CharField(max_length=11, null=True, blank=True)
+
     class Meta:
         verbose_name_plural = "Vendors"
 

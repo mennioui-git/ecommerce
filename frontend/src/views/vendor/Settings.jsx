@@ -10,7 +10,8 @@ import Swal from 'sweetalert2'
 function Settings() {
 
   const [profileData, setProfileData] = useState({ 'full_name': '', 'mobile': '', 'email': '', 'about': '', 'country': '', 'city': '', 'state': '', 'address': '', 'p_image': '', });
-  const [vendorData, setVendorData] = useState([]);
+  const [vendorData, setVendorData] = useState({});
+  const [bankData, setBankData] = useState({ bank_name: '', account_holder_name: '', account_number: '', iban: '', swift_code: '' });
   const [vendorImage, setVendorImage] = useState("");
   const [profileImage, setprofileImage] = useState("");
 
@@ -49,7 +50,13 @@ function Settings() {
       axios.get(`vendor-shop-settings/${userData?.vendor_id}/`).then((res) => {
         setVendorData(res.data)
         setVendorImage(res.data.image)
-        console.log("res.data.image:", res.data.image);
+        setBankData({
+          bank_name: res.data.bank_name || '',
+          account_holder_name: res.data.account_holder_name || '',
+          account_number: res.data.account_number || '',
+          iban: res.data.iban || '',
+          swift_code: res.data.swift_code || '',
+        })
       })
     } catch (error) {
       console.error('Error fetching profile data:', error);
@@ -82,6 +89,13 @@ function Settings() {
   const handleShopInputChange = (event) => {
     setVendorData({
       ...vendorData,
+      [event.target.name]: event.target.value
+    })
+  };
+
+  const handleBankInputChange = (event) => {
+    setBankData({
+      ...bankData,
       [event.target.name]: event.target.value
     })
   };
@@ -131,6 +145,16 @@ function Settings() {
     }
   };
 
+
+  const handleBankFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await apiInstance.patch(`vendor-shop-settings/${userData?.vendor_id}/`, bankData);
+      Swal.fire({ icon: 'success', title: 'Banking details updated successfully' });
+    } catch (error) {
+      console.error('Error updating bank details:', error);
+    }
+  };
 
   const handleShopFormSubmit = async (e) => {
     e.preventDefault();
@@ -186,6 +210,11 @@ function Settings() {
                 <li className="nav-item" role="presentation">
                   <button className="nav-link" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true" >
                     Profile
+                  </button>
+                </li>
+                <li className="nav-item" role="presentation">
+                  <button className="nav-link" id="pills-bank-tab" data-bs-toggle="pill" data-bs-target="#pills-bank" type="button" role="tab" aria-controls="pills-bank" aria-selected="false">
+                    Banking
                   </button>
                 </li>
                 {/* <li className="nav-item" role="presentation">
@@ -589,6 +618,42 @@ function Settings() {
                     </li>
                   </ol>
                 </div>
+                <div className="tab-pane fade" id="pills-bank" role="tabpanel" aria-labelledby="pills-bank-tab">
+                  <div className="shadow p-4 rounded">
+                    <div className="alert alert-info mb-4">
+                      <i className="fas fa-info-circle me-2" />
+                      Lamssa Fashion takes a <strong>5% commission</strong> on each sale. Your earnings will be transferred to the bank account below after each payout cycle.
+                    </div>
+                    <form onSubmit={handleBankFormSubmit}>
+                      <div className="row">
+                        <div className="col-lg-6 mb-3">
+                          <label className="form-label">Bank Name</label>
+                          <input type="text" className="form-control" name="bank_name" value={bankData.bank_name} onChange={handleBankInputChange} placeholder="e.g. BNP Paribas" />
+                        </div>
+                        <div className="col-lg-6 mb-3">
+                          <label className="form-label">Account Holder Name</label>
+                          <input type="text" className="form-control" name="account_holder_name" value={bankData.account_holder_name} onChange={handleBankInputChange} placeholder="Full name on the account" />
+                        </div>
+                        <div className="col-lg-6 mb-3">
+                          <label className="form-label">Account Number</label>
+                          <input type="text" className="form-control" name="account_number" value={bankData.account_number} onChange={handleBankInputChange} placeholder="Bank account number" />
+                        </div>
+                        <div className="col-lg-6 mb-3">
+                          <label className="form-label">IBAN</label>
+                          <input type="text" className="form-control" name="iban" value={bankData.iban} onChange={handleBankInputChange} placeholder="e.g. FR76 3000 6000 0112 3456 7890 189" />
+                        </div>
+                        <div className="col-lg-6 mb-3">
+                          <label className="form-label">SWIFT / BIC Code</label>
+                          <input type="text" className="form-control" name="swift_code" value={bankData.swift_code} onChange={handleBankInputChange} placeholder="e.g. BNPAFRPP" />
+                        </div>
+                      </div>
+                      <button className="btn btn-success mt-2" type="submit">
+                        Save Banking Details <i className="fas fa-check-circle" />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
                 <div
                   className="tab-pane fade"
                   id="pills-contact"

@@ -65,7 +65,7 @@ function Register() {
                                                     <input
                                                         type="text"
                                                         id="username"
-                                                        onChange={(e) => setFullname(e.target.value)}
+                                                        onChange={(e) => setFullName(e.target.value)}
                                                         placeholder="Full Name"
                                                         required
                                                         className="form-control"

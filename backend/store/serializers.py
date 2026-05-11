@@ -85,7 +85,7 @@ class ColorSerializer(serializers.ModelSerializer):
 # Define a serializer for the Product model
 class ProductSerializer(serializers.ModelSerializer):
     # Serialize related Category, Tag, and Brand models
-    category = CategorySerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True, allow_null=True)
     tags = TagSerializer(many=True, read_only=True)
     gallery = GallerySerializer(many=True, read_only=True)
     color = ColorSerializer(many=True, read_only=True)
@@ -245,23 +245,35 @@ class VendorSerializer(serializers.ModelSerializer):
 
 # Define a serializer for the Review model
 class ReviewSerializer(serializers.ModelSerializer):
-    # Serialize the related Product model
     product = ProductSerializer()
-    profile = ProfileSerializer()
-    
+    profile = serializers.SerializerMethodField()
+
+    def get_profile(self, obj):
+        if obj.user:
+            try:
+                from userauths.models import Profile
+                p = Profile.objects.get(user=obj.user)
+                return {
+                    'full_name': p.full_name or obj.user.full_name,
+                    'image': p.image.url if p.image else '',
+                }
+            except Exception:
+                return {'full_name': obj.user.full_name, 'image': ''}
+        return {
+            'full_name': obj.reviewer_name or 'Anonymous',
+            'image': '',
+        }
+
     class Meta:
         model = Review
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super(ReviewSerializer, self).__init__(*args, **kwargs)
-        # Customize serialization depth based on the request method.
         request = self.context.get('request')
         if request and request.method == 'POST':
-            # When creating a new review, set serialization depth to 0.
             self.Meta.depth = 0
         else:
-            # For other methods, set serialization depth to 3.
             self.Meta.depth = 3
 
 # Define a serializer for the Wishlist model

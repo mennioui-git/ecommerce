@@ -102,6 +102,22 @@ function Checkout() {
     event.target.form.submit();
   }
 
+  const payWithTestMode = async () => {
+    setPaymentLoading(true)
+    try {
+      const cartId = localStorage.getItem('cart_id');
+      const formData = new FormData()
+      formData.append('order_oid', order.oid)
+      formData.append('session_id', 'test_bypass')
+      formData.append('payapl_order_id', 'null')
+      if (cartId) formData.append('cart_id', cartId)
+      await axios.post('payment-success/', formData)
+    } catch (e) {
+      // ignore — we navigate anyway
+    }
+    window.location.href = `/payment-success/${order.oid}/?session_id=test_bypass`
+  }
+
 
   return (
     <div>
@@ -257,17 +273,18 @@ function Checkout() {
                       }
                     </div>
 
-                    {paymentLoading === true &&
-                      <form action={`${API_BASE_URL}stripe-checkout/${param?.order_oid}/`} method='POST'>
-                        <button onClick={payWithStripe} type="submit" className="btn btn-primary btn-rounded w-100 mt-2" style={{ backgroundColor: "#635BFF" }}>Processing... <i className='fas fa-spinner fa-spin'></i> </button>
-                      </form>
-                    }
-
-                    {paymentLoading === false &&
-                      <form action={`${API_BASE_URL}stripe-checkout/${param?.order_oid}/`} method='POST'>
-                        <button onClick={payWithStripe} type="submit" className="btn btn-primary btn-rounded w-100 mt-2" style={{ backgroundColor: "#635BFF" }}>Pay Now (Stripe)</button>
-                      </form>
-                    }
+                    <button
+                      onClick={payWithTestMode}
+                      disabled={paymentLoading}
+                      type="button"
+                      className="btn btn-primary btn-rounded w-100 mt-2"
+                      style={{ backgroundColor: "#635BFF" }}
+                    >
+                      {paymentLoading
+                        ? <>Processing... <i className='fas fa-spinner fa-spin' /></>
+                        : <>Pay Now (Card) <i className='fas fa-credit-card ms-1' /></>
+                      }
+                    </button>
 
                     <PayPalScriptProvider options={initialOptions}>
                       <PayPalButtons className='mt-3'

@@ -26,12 +26,12 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Lamssa Creation APIs",
+        title="Lamssa Fashion APIs",
         default_version='v1',
         description="This is the documentation for backend apis",
-        terms_of_service="https://www.lamssacreation.ma/policies/terms/",
+        terms_of_service="https://www.lamssafashion.com/policies/terms/",
         contact=openapi.Contact(email="mohamedmennioui1996@gmail.com"),
-        license=openapi.License(name="Lamssa Creation License"),
+        license=openapi.License(name="Lamssa Fashion License"),
     ),
     public=True,
     permission_classes=[permissions.AllowAny],

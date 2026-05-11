@@ -624,6 +624,11 @@ class VendorRegister(generics.CreateAPIView):
             description=description,
             mobile=mobile,
             user_id=user_id,
+            bank_name=payload.get('bank_name', ''),
+            account_holder_name=payload.get('account_holder_name', ''),
+            account_number=payload.get('account_number', ''),
+            iban=payload.get('iban', ''),
+            swift_code=payload.get('swift_code', ''),
         )
 
         return Response({"message":"Created vendor account"})

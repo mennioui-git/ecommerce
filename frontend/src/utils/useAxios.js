@@ -1,32 +1,8 @@
-import axios from "axios";
-import { isAccessTokenExpired, setAuthUser, getRefreshToken } from "./auth";
-import { BASE_URL } from "./constants";
-import Cookies from "js-cookie";
+// useAxios is kept for backward compatibility but all requests now go through
+// apiInstance (axios.js) which handles auth and token refresh automatically.
+// This hook simply returns the same apiInstance.
+import apiInstance from './axios';
 
-
-const useAxios = async () => {
-    const access_token = Cookies.get('access_token');
-    const refresh_token = Cookies.get('refresh_token');
-
-    const axiosInstance = axios.create({
-        baseURL: BASE_URL,
-        headers: { Authorization: `Bearer ${access_token}`}
-    })
-
-    axiosInstance.interceptors.request.use(async (req) => {
-        if (!isAccessTokenExpired(access_token)){
-            return req
-        }
-
-        const response = await getRefreshToken(refresh_token)
-        setAuthUser(response.access, response.refresh)
-
-        req.headers.Authorization = `Bearer ${response.data.access}`;
-        return req;
-    })
-
-    return axiosInstance;
-
-}
+const useAxios = () => apiInstance;
 
 export default useAxios;

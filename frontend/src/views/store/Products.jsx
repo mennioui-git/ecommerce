@@ -14,6 +14,7 @@ import { CartContext } from '../plugin/Context';
 function Products() {
 
     const [featuredProducts, setFeaturedProducts] = useState([])
+    const [newArrivals, setNewArrivals] = useState([])
     const [products, setProducts] = useState([])
     const [category, setCategory] = useState([])
     const [brand, setBrand] = useState([])
@@ -57,6 +58,7 @@ function Products() {
 
     useEffect(() => { fetchData('products/', setProducts); }, []);
     useEffect(() => { fetchData('featured-products/', setFeaturedProducts); }, []);
+    useEffect(() => { fetchData('new-arrivals/', setNewArrivals); }, []);
     useEffect(() => { fetchData('category/', setCategory); }, []);
     useEffect(() => { fetchData('brand/', setBrand); }, []);
 
@@ -95,12 +97,8 @@ function Products() {
         }
     };
 
-    const handleAddToWishlist = async (product_id) => {
-        try {
-            await addToWishlist(product_id, userData?.user_id)
-        } catch (error) {
-            console.log(error);
-        }
+    const handleAddToWishlist = (product_id) => {
+        addToWishlist(product_id, userData?.user_id);
     };
 
     const AddToCartButton = ({ productId, price, shipping }) => (
@@ -112,11 +110,11 @@ function Products() {
             style={{ fontSize: '0.75rem' }}
         >
             {loadingStates[productId] === 'Added to Cart' ? (
-                <>Ajouté <FaCheckCircle /></>
+                <>Added <FaCheckCircle /></>
             ) : loadingStates[productId] === 'Adding...' ? (
-                <>Ajout... <FaSpinner className="fas fa-spin" /></>
+                <>Adding... <FaSpinner className="fas fa-spin" /></>
             ) : (
-                <>{loadingStates[productId] || 'Ajouter'} <FaShoppingCart /></>
+                <>{loadingStates[productId] || 'Add to Cart'} <FaShoppingCart /></>
             )}
         </button>
     );
@@ -126,27 +124,27 @@ function Products() {
             {loading === false && (
                 <div>
                     {/* ── Collections Section ── */}
-                    <div className="lc-products-section">
+                    <div id="our-collections" className="lc-products-section">
                         <div className="container">
                             <div className="text-center mb-2">
-                                <span className="lc-section-label">Explorer</span>
-                                <h2 className="lc-section-title">Nos Collections</h2>
-                                <p className="lc-section-subtitle">Découvrez nos dernières catégories</p>
+                                <span className="lc-section-label">Explore</span>
+                                <h2 className="lc-section-title">Our Collections</h2>
+                                <p className="lc-section-subtitle">Discover our latest categories</p>
                             </div>
                             <div className="lc-category-strip">
                                 {category.map((c, index) => (
-                                    <a href="#" className="lc-category-chip" key={index}>
+                                    <Link to={`/category/${c.slug}`} className="lc-category-chip" key={index}>
                                         <img src={c.image} alt={c.title} />
                                         <p>{c.title}</p>
-                                    </a>
+                                    </Link>
                                 ))}
                             </div>
 
                             {/* ── Featured Products ── */}
                             <div className="text-center mb-4 mt-2">
-                                <span className="lc-section-label">À la Une</span>
-                                <h2 className="lc-section-title">Produits Vedettes</h2>
-                                <p className="lc-section-subtitle">Une sélection soigneusement choisie pour vous</p>
+                                <span className="lc-section-label">Highlighted</span>
+                                <h2 className="lc-section-title">Featured Products</h2>
+                                <p className="lc-section-subtitle">A carefully curated selection just for you</p>
                             </div>
                             <div className="row">
                                 {currentItems.map((product, index) => (
@@ -189,7 +187,7 @@ function Products() {
                                                                         <input
                                                                             type="number"
                                                                             className="form-control"
-                                                                            placeholder="Quantité"
+                                                                            placeholder="Quantity"
                                                                             onChange={(e) => handleQtyChange(e, product.id)}
                                                                             min={1}
                                                                             defaultValue={1}
@@ -201,7 +199,7 @@ function Products() {
                                                             {/* Size */}
                                                             {product?.size && product?.size.length > 0 && (
                                                                 <div className="d-flex flex-column">
-                                                                    <li className="p-1"><b>Taille</b> : {selectedSize[product.id] || 'Choisir'}</li>
+                                                                    <li className="p-1"><b>Size</b>: {selectedSize[product.id] || 'Select'}</li>
                                                                     <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
                                                                         {product?.size?.map((size, i) => (
                                                                             <li key={i}>
@@ -220,7 +218,7 @@ function Products() {
                                                             {/* Color */}
                                                             {product.color && product.color.length > 0 && (
                                                                 <div className="d-flex flex-column mt-3">
-                                                                    <li className="p-1"><b>Couleur</b> : {selectedColors[product.id] || 'Choisir'}</li>
+                                                                    <li className="p-1"><b>Color</b>: {selectedColors[product.id] || 'Select'}</li>
                                                                     <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
                                                                         {product?.color?.map((color, i) => (
                                                                             <li key={i}>
@@ -265,7 +263,7 @@ function Products() {
                                 <ul className="pagination">
                                     <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                                         <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>
-                                            &lsaquo; Précédent
+                                            &lsaquo; Previous
                                         </button>
                                     </li>
                                 </ul>
@@ -279,19 +277,63 @@ function Products() {
                                 <ul className="pagination">
                                     <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                                         <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>
-                                            Suivant &rsaquo;
+                                            Next &rsaquo;
                                         </button>
                                     </li>
                                 </ul>
                             </nav>
                             <div className="mb-2">
-                                <span className="lc-section-subtitle">Page <b>{currentPage}</b> sur <b>{totalPages}</b></span>
+                                <span className="lc-section-subtitle">Page <b>{currentPage}</b> of <b>{totalPages}</b></span>
                             </div>
                             {totalPages !== 1 && (
                                 <div className="mb-4">
-                                    <span className="lc-section-subtitle">Affichage de <b>{itemsPerPage}</b> sur <b>{products?.length}</b> articles</span>
+                                    <span className="lc-section-subtitle">Showing <b>{itemsPerPage}</b> of <b>{products?.length}</b> items</span>
                                 </div>
                             )}
+                        </div>
+                    </div>
+
+                    {/* ── New Arrivals ── */}
+                    <div id="new-arrivals" className="lc-products-section">
+                        <div className="container">
+                            <div className="text-center mb-4">
+                                <span className="lc-section-label">Just In</span>
+                                <h2 className="lc-section-title">New Arrivals</h2>
+                                <p className="lc-section-subtitle">The freshest additions to our collection</p>
+                            </div>
+                            <div className="row">
+                                {newArrivals.map((product, index) => (
+                                    <div className="col-lg-4 col-md-6 mb-4" key={product.id || index}>
+                                        <div className="lc-product-card">
+                                            <div className="lc-product-card-img-wrapper">
+                                                <Link to={`/detail/${product.slug}`}>
+                                                    <img src={product.image} alt={product.title} />
+                                                </Link>
+                                            </div>
+                                            <div className="lc-product-card-body">
+                                                <Link to={`/vendor/${product?.vendor?.slug}`} className="lc-product-vendor">
+                                                    {product.vendor?.name}
+                                                </Link>
+                                                <Link to={`/detail/${product.slug}`} className="lc-product-title">
+                                                    {product.title.slice(0, 40)}
+                                                </Link>
+                                                <span className="lc-product-brand">{product?.brand?.title}</span>
+                                                <p className="lc-product-price">{addon.currency_sign}{product.price}</p>
+                                                <div className="lc-card-actions">
+                                                    <AddToCartButton productId={product.id} price={product.price} shipping={product.shipping_amount} />
+                                                    <button
+                                                        onClick={() => handleAddToWishlist(product.id)}
+                                                        type="button"
+                                                        className="lc-wishlist-btn"
+                                                    >
+                                                        <i className="fas fa-heart" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -299,9 +341,9 @@ function Products() {
                     <div className="lc-products-section-alt">
                         <div className="container">
                             <div className="text-center mb-4">
-                                <span className="lc-section-label">Tendances</span>
-                                <h2 className="lc-section-title">Nos Coups de Cœur</h2>
-                                <p className="lc-section-subtitle">Les pièces les plus appréciées de la saison</p>
+                                <span className="lc-section-label">Trending</span>
+                                <h2 className="lc-section-title">Staff Picks</h2>
+                                <p className="lc-section-subtitle">The most loved pieces of the season</p>
                             </div>
                             <div className="row">
                                 {featuredProducts.map((product, index) => (
@@ -325,7 +367,7 @@ function Products() {
                                                         className="btn btn-primary flex-grow-1"
                                                         style={{ fontSize: '0.75rem' }}
                                                     >
-                                                        Ajouter <FaShoppingCart />
+                                                        Add to Cart <FaShoppingCart />
                                                     </button>
                                                     <button type="button" className="lc-wishlist-btn">
                                                         <i className="fas fa-heart" />
@@ -343,7 +385,7 @@ function Products() {
 
             {loading === true && (
                 <div className="lc-loading">
-                    <span className="lc-section-label" style={{ textAlign: 'center' }}>Chargement</span>
+                    <span className="lc-section-label" style={{ textAlign: 'center' }}>Loading</span>
                     <div className="d-flex gap-2">
                         <span className="lc-loading-dot" style={{ animationDelay: '0s' }} />
                         <span className="lc-loading-dot" style={{ animationDelay: '0.2s' }} />

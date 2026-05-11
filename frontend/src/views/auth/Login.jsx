@@ -23,11 +23,11 @@ export default function Login() {
         setPassword('')
     }
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault()
         setIsLoading(true)
 
-        const {data, error} = login(email, password)
+        const {data, error} = await login(email, password)
 
         if (error) {
             alert(error)

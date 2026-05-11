@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
 
 import apiInstance from '../../utils/axios';
+import { CartContext } from '../plugin/Context';
 
 
 
@@ -9,7 +10,7 @@ function PaymentSuccess() {
     const [loading, setIsLoading] = useState(true)
     const [orderResponse, setOrderResponse] = useState([])
     const [order, setOrder] = useState([])
-
+    const [, setCartCount] = useContext(CartContext);
 
     const axios = apiInstance
     const param = useParams()
@@ -17,10 +18,6 @@ function PaymentSuccess() {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
     const payaplOrderId = urlParams.get('payapl_order_id');
-
-    console.log(param);
-    console.log(sessionId);
-    console.log(payaplOrderId);
 
     // Get order details
     useEffect(() => {
@@ -32,23 +29,24 @@ function PaymentSuccess() {
 
     // Payment Processing
     useEffect(() => {
+        const cartId = localStorage.getItem('cart_id');
+
         const formData = new FormData();
         formData.append('order_oid', param?.order_oid);
         formData.append('session_id', sessionId);
         formData.append('payapl_order_id', payaplOrderId);
+        if (cartId) formData.append('cart_id', cartId);
 
         setIsLoading(true)
 
         axios.post(`payment-success/`, formData).then((res) => {
             setOrderResponse(res.data)
-            if (res.data.message === "Payment Successfull") {
+            if (res.data.message === "Payment Successfull" || res.data.message === "Already Paid") {
                 setIsLoading(false)
+                // Reset cart
+                localStorage.removeItem('cart_id');
+                setCartCount(0);
             }
-
-            if (res.data.message === "Already Paid") {
-                setIsLoading(false)
-            }
-
         })
 
     }, [param?.order_oid])

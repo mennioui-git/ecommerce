@@ -1,19 +1,32 @@
 import { React, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom'
 import UseProfileData from '../plugin/UseProfileData'
+import apiInstance from '../../utils/axios';
+import UserData from '../plugin/UserData';
 
 
 function Sidebar() {
 
     const userProfile = UseProfileData()
+    const userData = UserData()
     let [loading, setLoading] = useState(true);
+    const [orderCount, setOrderCount] = useState(0);
+    const [wishlistCount, setWishlistCount] = useState(0);
+    const [notifCount, setNotifCount] = useState(0);
 
     useEffect(() => {
         if (userProfile) {
             setLoading(false)
         }
-
     })
+
+    useEffect(() => {
+        if (!userData?.user_id) return;
+        const uid = userData.user_id;
+        apiInstance.get(`customer/orders/${uid}/`).then(r => setOrderCount(r.data.length));
+        apiInstance.get(`customer/wishlist/${uid}/`).then(r => setWishlistCount(r.data.length));
+        apiInstance.get(`customer/notification/${uid}/`).then(r => setNotifCount(r.data.length));
+    }, [userData?.user_id])
 
     return (
         <div className="col-lg-3">
@@ -42,19 +55,19 @@ function Sidebar() {
                             <div className="ms-2 me-auto">
                                 <Link to={'/customer/orders/'} className="fw-bold text-dark"><i className='fas fa-shopping-cart me-2'></i>Orders</Link>
                             </div>
-                            <span className="badge bg-primary rounded-pill">14</span>
+                            <span className="badge bg-primary rounded-pill">{orderCount}</span>
                         </li>
                         <li className="list-group-item d-flex justify-content-between align-items-start">
                             <div className="ms-2 me-auto">
                                 <Link to={'/customer/wishlist/'} className="fw-bold text-dark"><i className='fas fa-heart fa-fade me-2'></i> Wishlist</Link>
                             </div>
-                            <span className="badge bg-primary rounded-pill">14</span>
+                            <span className="badge bg-primary rounded-pill">{wishlistCount}</span>
                         </li>
                         <li className="list-group-item d-flex justify-content-between align-items-start">
                             <div className="ms-2 me-auto">
                                 <Link to={'/customer/notifications/'} className="fw-bold text-dark"><i className='fas fa-bell fa-shake me-2'></i> Notification</Link>
                             </div>
-                            <span className="badge bg-primary rounded-pill">14</span>
+                            <span className="badge bg-primary rounded-pill">{notifCount}</span>
                         </li>
                         <li className="list-group-item d-flex justify-content-between align-items-start">
                             <div className="ms-2 me-auto">

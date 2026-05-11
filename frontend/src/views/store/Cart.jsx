@@ -53,34 +53,21 @@ function Cart() {
         // console.log(cartTotal);
     }
 
+
     useEffect(() => {
-        console.log(cartTotal);
-    }, [cartTotal]);
-
-    if (cart_id !== null || cart_id !== undefined) {
-        if (userData !== undefined) {
-            useEffect(() => {
-                fetchCartData(cart_id, userData.user_id);
-                fetchCartTotal(cart_id, userData.user_id);
-            }, []);
-        } else {
-            useEffect(() => {
-                fetchCartData(cart_id, null);
-                fetchCartTotal(cart_id, null);
-            }, []);
-        }
-    } else {
-        window.location.href("/");
-    }
-
+        if (!cart_id) return;
+        const userId = userData?.user_id ?? null;
+        fetchCartData(cart_id, userId);
+        fetchCartTotal(cart_id, userId);
+    }, [cart_id, userData?.user_id]);
 
     useEffect(() => {
         const initialQuantities = {};
         cart.forEach((c) => {
-            initialQuantities[c.product.id] = c.qty
+            initialQuantities[c.product.id] = c.qty;
         });
         setProductQuantities(initialQuantities);
-    }, productQuantities);
+    }, [cart]);
 
     const handleQtyChange = (event, product_id) => {
         const quantity = event.target.value;

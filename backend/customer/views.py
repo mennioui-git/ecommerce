@@ -88,3 +88,97 @@ class CustomerUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (AllowAny, )
+
+# ── Guest Wishlist (Redis) ─────────────────────────────────────────────────────
+from django.core.cache import cache
+from django.conf import settings
+from rest_framework.views import APIView
+from store.serializers import ProductSerializer
+
+WISHLIST_TTL = getattr(settings, 'WISHLIST_GUEST_TTL', 60 * 60 * 24 * 30)
+
+def guest_wishlist_key(guest_id):
+    return f"wishlist:guest:{guest_id}"
+
+
+class GuestWishlistView(APIView):
+    """
+    GET  /api/v1/guest/wishlist/          → list products in guest wishlist
+    POST /api/v1/guest/wishlist/          → toggle (add/remove) a product
+    """
+    permission_classes = (AllowAny,)
+
+    def _guest_id(self, request):
+        return request.headers.get('X-Guest-ID') or request.data.get('guest_id') or request.GET.get('guest_id')
+
+    def get(self, request):
+        guest_id = self._guest_id(request)
+        if not guest_id:
+            return Response([])
+
+        product_ids = cache.get(guest_wishlist_key(guest_id), [])
+        products = Product.objects.filter(id__in=product_ids, status='published')
+        return Response(ProductSerializer(products, many=True, context={'request': request}).data)
+
+    def post(self, request):
+        guest_id = self._guest_id(request)
+        product_id = request.data.get('product_id')
+
+        if not guest_id or not product_id:
+            return Response({'error': 'guest_id and product_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product_id = int(product_id)
+            Product.objects.get(id=product_id)
+        except (ValueError, Product.DoesNotExist):
+            return Response({'error': 'Invalid product'}, status=status.HTTP_404_NOT_FOUND)
+
+        key = guest_wishlist_key(guest_id)
+        product_ids = cache.get(key, [])
+
+        if product_id in product_ids:
+            product_ids.remove(product_id)
+            message = 'Removed From Wishlist'
+            added = False
+        else:
+            product_ids.append(product_id)
+            message = 'Added To Wishlist'
+            added = True
+
+        cache.set(key, product_ids, WISHLIST_TTL)
+        return Response({'message': message, 'added': added, 'count': len(product_ids)})
+
+
+class MergeGuestWishlistView(APIView):
+    """
+    POST /api/v1/guest/wishlist/merge/
+    Called right after login to move the Redis wishlist into the user's DB wishlist.
+    """
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        guest_id = request.data.get('guest_id')
+        user_id = request.data.get('user_id')
+
+        if not guest_id or not user_id:
+            return Response({'message': 'Nothing to merge'})
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        key = guest_wishlist_key(guest_id)
+        product_ids = cache.get(key, [])
+
+        merged = 0
+        for pid in product_ids:
+            try:
+                product = Product.objects.get(id=pid)
+                Wishlist.objects.get_or_create(user=user, product=product)
+                merged += 1
+            except Product.DoesNotExist:
+                pass
+
+        cache.delete(key)
+        return Response({'message': f'{merged} item(s) merged into your wishlist'})

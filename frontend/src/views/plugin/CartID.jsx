@@ -1,36 +1,25 @@
-import React from 'react';
+const CART_ID_KEY = 'cart_id';
 
 function CartID() {
-    // Function to generate a random string with the desired length
-    const generateRandomString = () => {
-        const length = 30; // Desired length of the random string
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; // Characters to choose from
-        let randomString = '';
+    let id = localStorage.getItem(CART_ID_KEY);
 
-        for (let i = 0; i < length; i++) {
-            // Generate a random index to select a character from the 'characters' string
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            // Append the selected character to the 'randomString'
-            randomString += characters.charAt(randomIndex);
+    // Migrate old key name if present
+    if (!id) {
+        const legacy = localStorage.getItem('randomString');
+        if (legacy) {
+            localStorage.setItem(CART_ID_KEY, legacy);
+            localStorage.removeItem('randomString');
+            id = legacy;
         }
-
-        // Store the generated 'randomString' in localStorage for later use
-        localStorage.setItem('randomString', randomString);
-    };
-
-    // Function to check if the random string exists in localStorage
-    const existingRandomString = localStorage.getItem('randomString');
-
-    if (!existingRandomString) {
-        // Random string doesn't exist in localStorage, generate and add it
-        generateRandomString();
-    } else {
-        // Log the existing 'randomString' found in localStorage
-        // console.log(`Random string in localStorage: ${existingRandomString}`);
     }
 
-    // Return the existing 'randomString' or 'undefined' if it doesn't exist
-    return existingRandomString;
+    if (!id) {
+        // crypto.randomUUID() is available in all modern browsers
+        id = crypto.randomUUID().replace(/-/g, '').substring(0, 30);
+        localStorage.setItem(CART_ID_KEY, id);
+    }
+
+    return id;
 }
 
 export default CartID;

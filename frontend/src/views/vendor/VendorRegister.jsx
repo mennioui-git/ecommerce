@@ -18,6 +18,11 @@ function VendorRegister() {
         email: "",
         description: "",
         mobile: "",
+        bank_name: "",
+        account_holder_name: "",
+        account_number: "",
+        iban: "",
+        swift_code: "",
     })
     const [isLoading, setIsLoading] = useState(false)
     const navigate = useNavigate()
@@ -53,6 +58,11 @@ function VendorRegister() {
         formdata.append('email', vendor.email)
         formdata.append('description', vendor.description)
         formdata.append('mobile', vendor.mobile)
+        formdata.append('bank_name', vendor.bank_name)
+        formdata.append('account_holder_name', vendor.account_holder_name)
+        formdata.append('account_number', vendor.account_number)
+        formdata.append('iban', vendor.iban)
+        formdata.append('swift_code', vendor.swift_code)
         formdata.append('user_id', UserData()?.user_id)
 
         await apiInstance.post(`vendor-register/`, formdata, config).then((res) => {
@@ -150,9 +160,37 @@ function VendorRegister() {
                                                     <label className="form-label" htmlFor="loginName">
                                                         Shop Description
                                                     </label>
-                                                    <textarea className='form-control' onChange={handleInputChange} name="description" id="" cols="30" rows="10"></textarea>
+                                                    <textarea className='form-control' onChange={handleInputChange} name="description" id="" cols="30" rows="4"></textarea>
                                                 </div>
 
+                                                <hr />
+                                                <p className="fw-semibold mb-3">
+                                                    <i className="fas fa-university me-2" />Banking Information
+                                                    <span className="text-muted fw-normal ms-2" style={{ fontSize: '0.82rem' }}>
+                                                        Lamssa Fashion takes 5% on each sale — payouts go to this account.
+                                                    </span>
+                                                </p>
+
+                                                <div className="form-outline mb-3">
+                                                    <label className="form-label">Bank Name</label>
+                                                    <input type="text" onChange={handleInputChange} name="bank_name" placeholder="e.g. BNP Paribas" required className="form-control" />
+                                                </div>
+                                                <div className="form-outline mb-3">
+                                                    <label className="form-label">Account Holder Name</label>
+                                                    <input type="text" onChange={handleInputChange} name="account_holder_name" placeholder="Full name on the account" required className="form-control" />
+                                                </div>
+                                                <div className="form-outline mb-3">
+                                                    <label className="form-label">Account Number</label>
+                                                    <input type="text" onChange={handleInputChange} name="account_number" placeholder="Bank account number" required className="form-control" />
+                                                </div>
+                                                <div className="form-outline mb-3">
+                                                    <label className="form-label">IBAN</label>
+                                                    <input type="text" onChange={handleInputChange} name="iban" placeholder="e.g. FR76 3000 6000 0112 3456 7890 189" required className="form-control" />
+                                                </div>
+                                                <div className="form-outline mb-4">
+                                                    <label className="form-label">SWIFT / BIC Code</label>
+                                                    <input type="text" onChange={handleInputChange} name="swift_code" placeholder="e.g. BNPAFRPP" required className="form-control" />
+                                                </div>
 
                                                 <button className='btn btn-primary w-100' type="submit" disabled={isLoading}>
                                                     {isLoading ? (

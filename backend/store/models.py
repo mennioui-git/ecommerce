@@ -478,6 +478,7 @@ class Review(models.Model):
     review = models.TextField()
     reply = models.CharField(null=True, blank=True, max_length=1000)
     rating = models.IntegerField(choices=RATING, default=None)
+    reviewer_name = models.CharField(max_length=200, null=True, blank=True)
     active = models.BooleanField(default=False)
     helpful = models.ManyToManyField(User, blank=True, related_name="helpful")
     not_helpful = models.ManyToManyField(User, blank=True, related_name="not_helpful")

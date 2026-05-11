@@ -123,12 +123,8 @@ function Shop() {
     };
 
 
-    const handleAddToWishlist = async (product_id) => {
-        try {
-            await addToWishlist(product_id, userData?.user_id)
-        } catch (error) {
-            console.log(error);
-        }
+    const handleAddToWishlist = (product_id) => {
+        addToWishlist(product_id);
     };
 
 

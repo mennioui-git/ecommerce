@@ -23,7 +23,8 @@ import OrderDetail from './views/customer/OrderDetail';
 import Wishlist from './views/customer/Wishlist';
 import Notifications from './views/customer/Notifications';
 import Settings from './views/customer/Settings';
-import { CartContext } from './views/plugin/Context';
+import { CartContext, WishlistContext } from './views/plugin/Context';
+import { getGuestId } from './utils/guestId';
 import UserData from './views/plugin/UserData';
 import CartID from './views/plugin/CartID';
 import apiInstance from './utils/axios';
@@ -42,6 +43,7 @@ import VendorNotifications from './views/vendor/Notifications';
 import VendorSettings from './views/vendor/Settings';
 import Shop from './views/vendor/Shop';
 import Search from './views/store/Search';
+import CategoryProducts from './views/store/CategoryProducts';
 import ForgotPassword from './views/auth/ForgotPassword';
 import CreatePassword from './views/auth/CreatePassword';
 import VendorRegister from './views/vendor/VendorRegister';
@@ -49,29 +51,55 @@ import OrderItemDetail from './views/vendor/OrderItemDetail';
 
 
 
-function App() { // Define the main 'App' component.
-    const [cartCount, setCartCount] = useState()
-    const userData = UserData()
-    let cart_id = CartID()
-    const axios = apiInstance
+function App() {
+    const [cartCount, setCartCount] = useState(0);
+    const [wishlistCount, setWishlistCount] = useState(0);
+    const userData = UserData();
+    let cart_id = CartID();
+    const axios = apiInstance;
 
-    const cartContextValue = useMemo(() => {
-        return [cartCount, setCartCount];
-    }, [cartCount]);
-
+    const cartContextValue = useMemo(() => [cartCount, setCartCount], [cartCount]);
+    const wishlistContextValue = useMemo(() => [wishlistCount, setWishlistCount], [wishlistCount]);
 
     useEffect(() => {
-        const url = userData?.user_id 
-            ? `cart-list/${cart_id}/${userData?.user_id}/` 
+        const url = userData?.user_id
+            ? `cart-list/${cart_id}/${userData.user_id}/`
             : `cart-list/${cart_id}/`;
+        axios.get(url).then((res) => setCartCount(res.data.length)).catch(() => {});
+    }, [userData?.user_id, cart_id]);
 
-        axios.get(url).then((res) => {
-            setCartCount(res.data.length)
-        });
-    }, [userData, cart_id]);
+    const fetchWishlistCount = async () => {
+        try {
+            if (userData?.user_id) {
+                const res = await axios.get(`customer/wishlist/${userData.user_id}/`);
+                setWishlistCount(res.data.length);
+            } else {
+                const guestId = getGuestId();
+                const res = await axios.get('guest/wishlist/', {
+                    params: { guest_id: guestId },
+                    headers: { 'X-Guest-ID': guestId },
+                });
+                setWishlistCount(res.data.length);
+            }
+        } catch {
+            setWishlistCount(0);
+        }
+    };
+
+    useEffect(() => {
+        fetchWishlistCount();
+    }, [userData?.user_id]);
+
+    // Re-fetch count whenever a wishlist toggle happens anywhere in the app
+    useEffect(() => {
+        const handler = () => fetchWishlistCount();
+        window.addEventListener('wishlist-updated', handler);
+        return () => window.removeEventListener('wishlist-updated', handler);
+    }, [userData?.user_id]);
 
     return (
-        <CartContext.Provider value={cartContextValue} >
+        <CartContext.Provider value={cartContextValue}>
+        <WishlistContext.Provider value={wishlistContextValue}>
             <BrowserRouter>
 
                 <StoreHeader />
@@ -100,12 +128,13 @@ function App() { // Define the main 'App' component.
                         <Route path="/payment-success/:order_oid/" element={<PaymentSuccess />} />
                         <Route path="/invoice/:order_oid/" element={<Invoice />} />
                         <Route path="/search" element={<Search />} />
+                        <Route path="/category/:slug" element={<CategoryProducts />} />
 
                         {/* Customer Routes */}
                         <Route path="/customer/account/" element={<PrivateRoute><Account /></PrivateRoute>} />
                         <Route path="/customer/orders/" element={<PrivateRoute><Orders /></PrivateRoute>} />
                         <Route path="/customer/order/detail/:order_oid/" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
-                        <Route path="/customer/wishlist/" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
+                        <Route path="/customer/wishlist/" element={<Wishlist />} />
                         <Route path="/customer/notifications/" element={<PrivateRoute><Notifications /></PrivateRoute>} />
                         <Route path="/customer/settings/" element={<PrivateRoute><Settings /></PrivateRoute>} />
 
@@ -131,7 +160,8 @@ function App() { // Define the main 'App' component.
                 </MainWrapper>
                 <StoreFooter />
             </BrowserRouter>
-        </CartContext.Provider >
+        </WishlistContext.Provider>
+        </CartContext.Provider>
 
     );
 }

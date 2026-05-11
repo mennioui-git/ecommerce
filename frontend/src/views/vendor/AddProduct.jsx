@@ -161,11 +161,13 @@ function AddProduct() {
 
             colors.forEach((color, index) => {
                 Object.entries(color).forEach(([key, value]) => {
-                    if (key === 'image' && value && value.file && value.file.type.startsWith('image/')) {
-                        formData.append(`colors[${index}][${key}]`, value.file, value.file.name);
+                    if (key === 'image') {
+                        if (value && value.file && value.file.type.startsWith('image/')) {
+                            formData.append(`colors[${index}][${key}]`, value.file, value.file.name);
+                        }
+                        // skip null/invalid images entirely — backend defaults to null
                     } else {
-                        console.log(String(value));
-                        formData.append(`colors[${index}][${key}]`, String(value)); // Convert `value` to a string
+                        formData.append(`colors[${index}][${key}]`, String(value));
                     }
                 });
             });
@@ -190,21 +192,17 @@ function AddProduct() {
                 },
             });
 
-            // navigate('/vendor/products/')
+            navigate('/vendor/products/')
 
             Swal.fire({
                 icon: 'success',
                 title: 'Product Created Successfully',
                 text: 'This product has been successfully created',
             });
-
-
-
-            const data = await response.json();
         } catch (error) {
             console.error('Error submitting form:', error);
+            console.error('Validation errors:', error.response?.data);
             setIsLoading(false)
-
         }
     };
 

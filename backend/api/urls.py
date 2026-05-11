@@ -11,8 +11,9 @@ urlpatterns = [
     path('', userauths_views.getRoutes),
 
     path('user/token/', userauths_views.MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('user/register/', userauths_views.RegisterView.as_view(), name='user_register'),
     path('user/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('user/logout/', userauths_views.LogoutView.as_view(), name='user_logout'),
+    path('user/register/', userauths_views.RegisterView.as_view(), name='user_register'),
     path('user/password-reset/<email>/', userauths_views.PasswordRestEmailVerify.as_view(), name='user_verify'),
     path('user/password-change/', userauths_views.PasswordChangeView.as_view(), name='password_change'),
     path('user/profile/<user_id>/', userauths_views.ProfileView.as_view(), name='user_profile'),
@@ -23,9 +24,11 @@ urlpatterns = [
 
     # Store API endpoints
     path('category/', store_views.CategoryListView.as_view(), name='category_list'),
+    path('category/<slug:slug>/products/', store_views.CategoryProductsView.as_view(), name='category-products'),
     path('brand/', store_views.BrandListView.as_view(), name='brand'),
     path('products/', store_views.ProductListView.as_view(), name='product_list'),
     path('featured-products/', store_views.FeaturedProductListView.as_view(), name='featured-products'),
+    path('new-arrivals/', store_views.NewArrivalsListView.as_view(), name='new-arrivals'),
     path('products/<slug:slug>/', store_views.ProductDetailView.as_view(), name='product_detail'),
     path('cart-view/', store_views.CartApiView.as_view(), name='cart_api'),
     path('cart-list/<str:cart_id>/', store_views.CartListView.as_view(), name='cart-list'),
@@ -50,6 +53,10 @@ urlpatterns = [
     path('customer/order/detail/<user_id>/<order_oid>/', customer_views.OrdersDetailAPIView.as_view(), name='customer-order-detail'),
     path('customer/wishlist/create/', customer_views.WishlistCreateAPIView.as_view(), name='customer-wishlist-create'),
     path('customer/wishlist/<user_id>/', customer_views.WishlistAPIView.as_view(), name='customer-wishlist'),
+
+    # Guest wishlist (Redis — no account required)
+    path('guest/wishlist/', customer_views.GuestWishlistView.as_view(), name='guest-wishlist'),
+    path('guest/wishlist/merge/', customer_views.MergeGuestWishlistView.as_view(), name='guest-wishlist-merge'),
     path('customer/notification/<user_id>/', customer_views.CustomerNotificationView.as_view(), name='customer-notification'),
     path('customer/setting/<int:pk>/', customer_views.CustomerUpdateView.as_view(), name='customer-settings'),
 
@@ -86,4 +93,7 @@ urlpatterns = [
     # Tracking Feature
     path('vendor/couriers/', vendor_views.CourierListAPIView.as_view()),
     path('vendor/order-item-detail/<int:pk>/', vendor_views.OrderItemDetailAPIView.as_view()),
+
+    # Guest Wishlist
+    path('wishlist-products/', store_views.WishlistProductsView.as_view(), name='wishlist-products'),
 ]

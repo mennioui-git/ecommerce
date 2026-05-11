@@ -9,10 +9,10 @@ function StoreFooter() {
 
           {/* Brand Column */}
           <div className="col-lg-4 col-md-6">
-            <span className="lc-footer-brand">Lamssa Creation</span>
+            <span className="lc-footer-brand">Lamssa Fashion</span>
             <p className="lc-footer-desc">
-              Votre destination mode pour des vêtements élégants et intemporels.
-              Qualité artisanale, style contemporain — pensé pour vous.
+              Your fashion destination for elegant and timeless clothing.
+              Artisan quality, contemporary style — designed for you.
             </p>
             <div className="lc-footer-social">
               <a href="#" aria-label="Instagram"><i className="fab fa-instagram" /></a>
@@ -26,46 +26,46 @@ function StoreFooter() {
           <div className="col-lg-2 col-md-3 col-6">
             <p className="lc-footer-col-title">Collections</p>
             <ul>
-              <li><a href="#">Femme</a></li>
-              <li><a href="#">Homme</a></li>
-              <li><a href="#">Accessoires</a></li>
-              <li><a href="#">Nouveautés</a></li>
-              <li><a href="#">Soldes</a></li>
+              <li><a href="#">Women</a></li>
+              <li><a href="#">Men</a></li>
+              <li><a href="#">Accessories</a></li>
+              <li><a href="#">New Arrivals</a></li>
+              <li><a href="#">Sale</a></li>
             </ul>
           </div>
 
-          {/* Service Client */}
+          {/* Customer Service */}
           <div className="col-lg-2 col-md-3 col-6">
-            <p className="lc-footer-col-title">Service Client</p>
+            <p className="lc-footer-col-title">Customer Service</p>
             <ul>
-              <li><a href="#">Livraison</a></li>
-              <li><a href="#">Retours</a></li>
+              <li><a href="#">Shipping</a></li>
+              <li><a href="#">Returns</a></li>
               <li><a href="#">FAQ</a></li>
-              <li><Link to="/cart/">Panier</Link></li>
+              <li><Link to="/cart/">Cart</Link></li>
               <li><a href="#">Contact</a></li>
             </ul>
           </div>
 
-          {/* À Propos */}
+          {/* About */}
           <div className="col-lg-2 col-md-3 col-6">
-            <p className="lc-footer-col-title">À Propos</p>
+            <p className="lc-footer-col-title">About</p>
             <ul>
-              <li><a href="#">Notre Histoire</a></li>
-              <li><a href="#">Presse</a></li>
-              <li><a href="#">Carrières</a></li>
-              <li><a href="#">Confidentialité</a></li>
-              <li><Link to="/vendor/register/">Devenir Vendeur</Link></li>
+              <li><a href="#">Our Story</a></li>
+              <li><a href="#">Press</a></li>
+              <li><a href="#">Careers</a></li>
+              <li><a href="#">Privacy</a></li>
+              <li><Link to="/vendor/register/">Become a Vendor</Link></li>
             </ul>
           </div>
 
-          {/* Mon Compte */}
+          {/* My Account */}
           <div className="col-lg-2 col-md-3 col-6">
-            <p className="lc-footer-col-title">Mon Compte</p>
+            <p className="lc-footer-col-title">My Account</p>
             <ul>
-              <li><Link to="/login">Connexion</Link></li>
-              <li><Link to="/register">Inscription</Link></li>
-              <li><Link to="/customer/orders/">Commandes</Link></li>
-              <li><Link to="/customer/wishlist/">Favoris</Link></li>
+              <li><Link to="/login">Login</Link></li>
+              <li><Link to="/register">Register</Link></li>
+              <li><Link to="/customer/orders/">Orders</Link></li>
+              <li><Link to="/customer/wishlist/">Wishlist</Link></li>
             </ul>
           </div>
 
@@ -76,10 +76,10 @@ function StoreFooter() {
       <div className="lc-footer-bottom">
         <div className="container d-flex flex-wrap justify-content-between align-items-center gap-2">
           <p className="lc-footer-copyright mb-0">
-            &copy; 2025 Lamssa Creation. Tous droits réservés.
+            &copy; 2025 Lamssa Fashion. All rights reserved.
           </p>
           <p className="lc-footer-copyright mb-0">
-            Mode &amp; Élégance — Fait avec soin
+            Fashion &amp; Elegance — Made with care
           </p>
         </div>
       </div>

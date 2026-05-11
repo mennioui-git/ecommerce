@@ -40,7 +40,7 @@ function ProductDetail() {
     let [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
     const [cartCount, setCartCount] = useContext(CartContext);
 
-    const [createReview, setCreateReview] = useState({ user_id: 0, product_id: product?.id, review: "", rating: 0, })
+    const [createReview, setCreateReview] = useState({ user_id: 0, product_id: product?.id, review: "", rating: 0, first_name: "", last_name: "" })
     const [reviews, setReviews] = useState([]);
 
     const axios = apiInstance
@@ -119,10 +119,7 @@ function ProductDetail() {
     };
 
     const handleAddToWishlist = () => {
-        if (userData) {
-            addToWishlist(product.id, userData?.user_id)
-            setWishlistLoading(true)
-        }
+        addToWishlist(product.id, userData?.user_id);
     }
 
 
@@ -134,27 +131,34 @@ function ProductDetail() {
     }
 
     const fetchReviewData = async () => {
-        axios.get(`reviews/${product?.id}/`).then((res) => {
+        if (!product?.id) return;
+        axios.get(`reviews/${product.id}/`).then((res) => {
             setReviews(res.data);
         })
     }
     useEffect(() => {
-
         fetchReviewData()
-    }, [loading])
+    }, [product?.id])
 
     const handleReviewSubmit = (e) => {
         e.preventDefault()
 
         const formdata = new FormData()
 
-        formdata.append('user_id', userData?.user_id)
         formdata.append('product_id', product?.id)
         formdata.append('rating', createReview.rating)
         formdata.append('review', createReview.review)
 
+        if (userData?.user_id) {
+            formdata.append('user_id', userData.user_id)
+        } else {
+            formdata.append('first_name', createReview.first_name)
+            formdata.append('last_name', createReview.last_name)
+        }
+
         axios.post(`create-review/`, formdata).then((res) => {
             fetchReviewData()
+            setCreateReview({ ...createReview, review: "", rating: 0, first_name: "", last_name: "" })
             Swal.fire({
                 icon: "success",
                 title: "Review created successfully"
@@ -196,9 +200,10 @@ function ProductDetail() {
                                                 <div className="p-3" key={index}>
                                                     <img
                                                         src={g.image}
-                                                        style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "10px" }}
-                                                        alt="Gallery image 1"
+                                                        style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "10px", cursor: "pointer" }}
+                                                        alt="Gallery image"
                                                         className="ecommerce-gallery-main-img active rounded-4"
+                                                        onClick={() => setProductImage(g.image)}
                                                     />
                                                 </div>
                                             ))}
@@ -339,8 +344,8 @@ function ProductDetail() {
                                                         <div className='d-flex'>
                                                             {color?.map((c, index) => (
                                                                 <div key={index}>
-                                                                    <input type="hidden" className='color_name' value={c.name} />
-                                                                    <input type="hidden" className='color_image' value={c.image} />
+                                                                    <input type="hidden" className='color_name' value={c.name ?? ''} />
+                                                                    <input type="hidden" className='color_image' value={c.image ?? ''} />
                                                                     <button className='btn p-3 me-2 color_button' onClick={handleColorButtonClick} style={{ backgroundColor: `${c.color_code}` }}></button>
                                                                 </div>
                                                             ))}
@@ -530,6 +535,34 @@ function ProductDetail() {
                                         <div className="col-md-6">
                                             <h2>Create a New Review</h2>
                                             <form method='POST' onSubmit={handleReviewSubmit}>
+                                                {!userData?.user_id && (
+                                                    <div className="row mb-3">
+                                                        <div className="col">
+                                                            <label className="form-label">First Name</label>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                name="first_name"
+                                                                placeholder="First Name"
+                                                                value={createReview.first_name}
+                                                                onChange={handleReviewChange}
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div className="col">
+                                                            <label className="form-label">Last Name</label>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                name="last_name"
+                                                                placeholder="Last Name"
+                                                                value={createReview.last_name}
+                                                                onChange={handleReviewChange}
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div className="mb-3">
                                                     <label htmlFor="username" className="form-label">
                                                         Rating
@@ -566,18 +599,18 @@ function ProductDetail() {
                                                 <>
                                                     <h2>All Reviews</h2>
                                                     {reviews.map((review, index) => (
-                                                        <div className="card mb-3 rounded-3">
+                                                        <div key={review.id ?? index} className="card mb-3 rounded-3">
                                                             <div className="row g-0">
                                                                 <div className="col-md-3">
                                                                     <img
-                                                                        src={review.profile.image}
+                                                                        src={review.profile?.image || "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"}
                                                                         alt="User Image"
                                                                         className="img-fluid"
                                                                     />
                                                                 </div>
                                                                 <div className="col-md-9">
                                                                     <div className="card-body">
-                                                                        <h5 className="card-title">{review.profile.full_name} { }</h5>
+                                                                        <h5 className="card-title">{review.profile?.full_name}</h5>
                                                                         <p className="card-text">{moment(review.date).format("MM/DD/YYYY")}</p>
                                                                         <p className="card-text">
                                                                             {review.review}
